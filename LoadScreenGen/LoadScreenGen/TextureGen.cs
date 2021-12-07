@@ -120,7 +120,7 @@ namespace LoadScreenGen {
                         int resolution = imageResolution[j];
                         // Execute texconv.exe (timeout = 10 seconds)
                         Directory.CreateDirectory(targetDirectory[j]);
-                        string args = "-m 1 -f BC1_UNORM " + srgbCmd + "-o \"" + targetDirectory[j] + "\" -y -w " + resolution + " -h " + resolution + " \"" + image.path + "\"";
+                        string args = "-f BC1_UNORM " + srgbCmd + "-o \"" + targetDirectory[j] + "\" -y -w " + resolution + " -h " + resolution + " \"" + image.path + "\"";
                         ShellExecuteWait(Path.Combine(Program.extraDataPath, "DirectXTex", "texconv.exe"), args);
                     }
                 }
