@@ -11,6 +11,7 @@ using LoadScreenGen.Settings;
 namespace LoadScreenGen {
     public class Program {
 
+        public static string fomodTmpPath = "JLoadScreens_AuthorOutput";
 
         public static string extraDataPath = "";
         public static IPatcherState<ISkyrimMod, ISkyrimModGetter>? state = null;
@@ -34,13 +35,112 @@ namespace LoadScreenGen {
             Program.extraDataPath = state.ExtraSettingsDataPath;
             Program.state = state;
 
+            var sse = state.GameRelease != GameRelease.SkyrimLE && state.GameRelease != GameRelease.EnderalLE;
+            string templatePath = "";
+            if(sse) {
+                templatePath = Path.Combine(extraDataPath, "TemplateSSE.nif");
+            } else {
+                templatePath = Path.Combine(extraDataPath, "TemplateLE.nif");
+            }
+
+
+
             if(Directory.Exists(Settings.sourcePath)) {
-                var imageArray = TextureGen.ProcessTextures(Settings.sourcePath, new string[] { Path.Combine(state.DataFolderPath, "textures", Settings.userSettings.defaultModFolder) }, new int[] { Settings.userSettings.imageResolution });
-                MeshGen.Run(imageArray.ToList(), Path.Combine("textures", Settings.userSettings.defaultModFolder), extraDataPath, false, state.DataFolderPath);
-                PluginGen.CreateEsp(state.PatchMod, imageArray, Settings.userSettings.defaultModFolder, "JLS_", true, Settings.userSettings.frequency, Settings.userSettings.loadScreenChoice);
+                if(!Settings.authorSettings.enableAuthorMode) {
+                    var imageArray = TextureGen.ProcessTextures(Settings.sourcePath, new string[] { Path.Combine(state.DataFolderPath, "textures", Settings.userSettings.defaultModFolder) }, new int[] { Settings.userSettings.imageResolution });
+
+                    string meshDirectory = Path.Combine(state.DataFolderPath, "meshes", Settings.userSettings.defaultModFolder);
+                    string textureDirectory = Path.Combine("textures", Settings.userSettings.defaultModFolder);
+                    Directory.CreateDirectory(meshDirectory);
+                    MeshGen.CreateMeshes(imageArray.ToList(), meshDirectory, textureDirectory, templatePath, Settings.userSettings.screenWidth * 1.0 / Settings.userSettings.screenHeight, Settings.userSettings.borderOption);
+                    PluginGen.CreateEsp(state.PatchMod, imageArray, Settings.userSettings.defaultModFolder, "JLS_", true, Settings.userSettings.frequency, Settings.userSettings.loadScreenChoice);
+                } else {
+                    var targetDirectory = new List<string>();
+                    var imageResolution = new List<int>();
+
+                    targetDirectory.Add(Path.Combine(state.DataFolderPath, fomodTmpPath, "textures", "2K"));
+                    imageResolution.Add(2048);
+                    if(Settings.authorSettings.resolutionSettings.fourK) {
+                        targetDirectory.Add(Path.Combine(state.DataFolderPath, fomodTmpPath, "textures", "4K"));
+                        imageResolution.Add(4096);
+                    }
+                    if(Settings.authorSettings.resolutionSettings.eightK) {
+                        targetDirectory.Add(Path.Combine(state.DataFolderPath, fomodTmpPath, "textures", "8K"));
+                        imageResolution.Add(8192);
+                    }
+                    
+                    string textureDirectory = Path.Combine("textures", Settings.authorSettings.modFolder);
+                    var imageArray = TextureGen.ProcessTextures(Settings.sourcePath, targetDirectory.ToArray(), imageResolution.ToArray());
+                    HashSet<BorderOption> borderOptions = new();
+                    if(Settings.authorSettings.borderSettings.includeNormal) {
+                        borderOptions.Add(BorderOption.Normal);
+                    }
+                    if(Settings.authorSettings.borderSettings.includeCrop) {
+                        borderOptions.Add(BorderOption.Crop);
+                    }
+                    if(Settings.authorSettings.borderSettings.includeFixedHeight) {
+                        borderOptions.Add(BorderOption.FixedHeight);
+                    }
+                    if(Settings.authorSettings.borderSettings.includeFixedWidth) {
+                        borderOptions.Add(BorderOption.FixedWidth);
+                    }
+                    if(Settings.authorSettings.borderSettings.includeStretch) {
+                        borderOptions.Add(BorderOption.Stretch);
+                    }
+                    var aspectRatios = AspectRatio.Parse(Settings.authorSettings.aspectRatios);
+                    foreach(var borderOption in borderOptions) {
+                        foreach(var aspectRatio in aspectRatios) {
+                            var displayRatio = aspectRatio.w * 1.0 / aspectRatio.h;
+                            string meshDirectory = Path.Combine(state.DataFolderPath, fomodTmpPath, "meshes");
+                            meshDirectory = Path.Combine(meshDirectory, "" + aspectRatio);
+                            meshDirectory = Path.Combine(meshDirectory, "" + borderOption);
+                            Logger.Log(meshDirectory);
+                            MeshGen.CreateMeshes(imageArray.ToList(), meshDirectory, textureDirectory, templatePath, displayRatio, borderOption);
+                        }
+                    }
+
+                }
             } else {
                 Console.WriteLine("Source path does not exist.");
             }
+        }
+    }
+    public class AspectRatio {
+        public int w;
+        public int h;
+        public AspectRatio(int w, int h) {
+            var gcd = MathUtils.GCD(w, h);
+            this.w = w / gcd;
+            this.h = h / gcd;
+        }
+
+        public override bool Equals(object? obj) {
+            var asAspectRatio = obj as AspectRatio;
+            if(asAspectRatio != null) {
+                return asAspectRatio.w == w && asAspectRatio.h == h;
+            }
+            return false;
+        }
+
+        public static HashSet<AspectRatio> Parse(string parseString) {
+            HashSet<AspectRatio> set = new();
+            var singleStrings = parseString.Split(",");
+            foreach(string s in singleStrings) {
+                var whString = s.Split(":");
+                if(whString.Length != 2) {
+                    throw new ArgumentException("Could not parse Aspect Ratio string:<" + parseString + ">");
+                }
+                set.Add(new AspectRatio(int.Parse(whString[0]), int.Parse(whString[1])));
+            }
+            return set;
+        }
+
+        public override string ToString() {
+            return w + "x" + h;
+        }
+
+        public override int GetHashCode() {
+            return Tuple.Create(w, h).GetHashCode();
         }
     }
 }

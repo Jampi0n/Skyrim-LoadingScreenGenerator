@@ -15,10 +15,6 @@ namespace LoadScreenGen.Settings {
         [SynthesisSettingName("Include sub directories")]
         public bool includeSubDirs  = true;
 
-        [SynthesisSettingName("Debug Mode")]
-        public bool debugMode = false;
-
-
         [SynthesisSettingName("User Settings (Generate Loading Screens for you)")]
         public UserSettings userSettings = new();
 

@@ -3,17 +3,17 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using nifly;
+//using nifly;
 using System.IO;
 using LoadScreenGen.Settings;
 
 namespace LoadScreenGen {
     public enum BorderOption {
-        Stretch,
-        Black,
+        Normal,
         Crop,
         FixedHeight,
         FixedWidth,
+        Stretch,
     }
 
     public static class MeshGen {
@@ -53,7 +53,7 @@ namespace LoadScreenGen {
                         width = width * imageRatio / displayRatio;
                     } else if(borderOption == BorderOption.Crop) {
                         height = height * displayRatio / imageRatio;
-                    } else if(borderOption == BorderOption.Black) {
+                    } else if(borderOption == BorderOption.Normal) {
                         width = width * imageRatio / displayRatio;
                     }
                 } else if(displayRatio < imageRatio) {
@@ -63,7 +63,7 @@ namespace LoadScreenGen {
                         width = width * imageRatio / displayRatio;
                     } else if(borderOption == BorderOption.Crop) {
                         width = width * imageRatio / displayRatio;
-                    } else if(borderOption == BorderOption.Black) {
+                    } else if(borderOption == BorderOption.Normal) {
                         height = height * displayRatio / imageRatio;
                     }
                 }
@@ -77,7 +77,7 @@ namespace LoadScreenGen {
         }
 
         public static void CreateMeshes(List<Image> imageList, string targetDirectory, string textureDirectory, string templatePath, double displayRatio, BorderOption borderOption) {
-            var templateNif = new NifFile();
+            /*var templateNif = new NifFile();
             templateNif.Load(templatePath);
             int i = 0;
             int n = imageList.Count;
@@ -120,22 +120,7 @@ namespace LoadScreenGen {
                 newNif.Dispose();
                 i++;
             }
-            templateNif.Dispose();
-        }
-
-        public static void Run(List<Image> imageList, string textureDirectory, string templatePath, bool SSE, string dataPath) {
-            Console.WriteLine("	Creating loading screen meshes...");
-
-            string fullPath = templatePath;
-            if(SSE) {
-                fullPath = Path.Combine(fullPath, "TemplateSSE.nif");
-            } else {
-                fullPath = Path.Combine(fullPath, "TemplateLE.nif");
-            }
-
-            string meshDirectory = Path.Combine(dataPath, "meshes", Program.Settings.userSettings.defaultModFolder);
-            Directory.CreateDirectory(meshDirectory);
-            CreateMeshes(imageList, meshDirectory, textureDirectory, fullPath, Program.Settings.userSettings.screenWidth * 1.0 / Program.Settings.userSettings.screenHeight, Program.Settings.userSettings.borderOption);
+            templateNif.Dispose();*/
         }
     }
 }
