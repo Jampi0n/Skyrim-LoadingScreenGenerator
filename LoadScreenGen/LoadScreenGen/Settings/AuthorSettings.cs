@@ -21,13 +21,13 @@ namespace LoadScreenGen.Settings {
         public BorderOption defaultBorderOption = BorderOption.Normal;
     }
 
-    public class ChoiceSettings {
+    public class PrioritySettings {
         public bool includeStandalone = true;
         public bool includeReplacer = true;
         public bool includeFrequency = true;
         public bool includeMcm = true;
         public bool includeDebug = false;
-        public LoadScreenChoice defaultChoiceSetting = LoadScreenChoice.Standalone;
+        public LoadingScreenPriority defaultPrioritySetting = LoadingScreenPriority.Standalone;
     }
 
     public class ResolutionSettings {
@@ -78,9 +78,9 @@ namespace LoadScreenGen.Settings {
         [SynthesisTooltip("List of target aspect ratios. e.g. \"4:3,16:10,16:9,21:9\"")]
         public string aspectRatios = "4:3,16:10,16:9,21:9";
 
-        [SynthesisSettingName("Loading Screen Choice")]
+        [SynthesisSettingName("Loading Screen Priority")]
 
-        public ChoiceSettings choiceSettings = new();
+        public PrioritySettings prioritySettings = new();
 
         [SynthesisSettingName("Frequency List")]
         [SynthesisTooltip("List of possible frequency choices. The first element will be the default selected item in the Fomod installer.")]

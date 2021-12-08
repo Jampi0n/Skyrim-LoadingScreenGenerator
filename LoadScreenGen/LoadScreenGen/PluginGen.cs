@@ -12,26 +12,6 @@ using System.IO;
 
 namespace LoadScreenGen {
 
-    public enum LoadScreenChoice {
-        Standalone,
-        Replacer,
-        Frequency,
-        Mcm,
-        Debug
-    }
-
-    public static class StaticLoadScreenChoice {
-        public static string ToDescription(this LoadScreenChoice borderOption) {
-            return borderOption switch {
-                LoadScreenChoice.Standalone => "Standalone: Loading screens will be added and used alongside vanilla loading screens.",
-                LoadScreenChoice.Replacer => "Replacer: Loading screens will be prioritized over vanilla loading screens.",
-                LoadScreenChoice.Frequency => "Frequency: Loading screens appear at a certain frequency instead of vanilla loading screens.",
-                LoadScreenChoice.Mcm => "Mcm: Loading screens appear at a certain frequency instead of vanilla loading screens. The frequency can be configured in a Mod Configuration Menu.",
-                LoadScreenChoice.Debug => "Debug: The loading screen that appears depends on a global variable. Change the variable in the in-game console to force a certain loading screen.",
-                _ => "",
-            };
-        }
-    }
 
     class PluginStandalone : PluginGen {
         protected override void Setup() { }
@@ -204,22 +184,22 @@ namespace LoadScreenGen {
         }
         protected abstract void Setup();
         protected abstract void ProcessLscr(Image image, LoadScreen lscr, int counter);
-        public static void CreateEsp(ISkyrimMod mod, Image[] imageArray, string meshPath, string prefix, bool includeMessages, int frequency, LoadScreenChoice loadScreenChoice) {
+        public static void CreateEsp(ISkyrimMod mod, Image[] imageArray, string meshPath, string prefix, bool includeMessages, int frequency, LoadingScreenPriority loadingScreenPriority) {
             PluginGen? pluginGen = null;
-            switch(loadScreenChoice) {
-                case LoadScreenChoice.Standalone:
+            switch(loadingScreenPriority) {
+                case LoadingScreenPriority.Standalone:
                     pluginGen = new PluginStandalone();
                     break;
-                case LoadScreenChoice.Replacer:
+                case LoadingScreenPriority.Replacer:
                     pluginGen = new PluginReplacer();
                     break;
-                case LoadScreenChoice.Mcm:
+                case LoadingScreenPriority.Mcm:
                     pluginGen = new PluginMcm();
                     break;
-                case LoadScreenChoice.Frequency:
+                case LoadingScreenPriority.Frequency:
                     pluginGen = new PluginFixed();
                     break;
-                case LoadScreenChoice.Debug:
+                case LoadingScreenPriority.Debug:
                     pluginGen = new PluginDebug();
                     break;
                 default:

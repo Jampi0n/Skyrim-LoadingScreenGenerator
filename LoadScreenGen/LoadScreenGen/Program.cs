@@ -55,7 +55,7 @@ namespace LoadScreenGen {
                     string textureDirectory = Path.Combine("textures", Settings.userSettings.defaultModFolder);
                     Directory.CreateDirectory(meshDirectory);
                     MeshGen.CreateMeshes(imageArray.ToList(), meshDirectory, textureDirectory, templatePath, Settings.userSettings.screenWidth * 1.0 / Settings.userSettings.screenHeight, Settings.userSettings.borderOption);
-                    PluginGen.CreateEsp(state.PatchMod, imageArray, Settings.userSettings.defaultModFolder, Settings.userSettings.defaultPrefix, true, Settings.userSettings.frequency, Settings.userSettings.loadScreenChoice);
+                    PluginGen.CreateEsp(state.PatchMod, imageArray, Settings.userSettings.defaultModFolder, Settings.userSettings.defaultPrefix, true, Settings.userSettings.frequency, Settings.userSettings.loadScreenPriority);
                 }
             } else {
                 if(Directory.Exists(Settings.authorSettings.sourcePath)) {
@@ -96,21 +96,21 @@ namespace LoadScreenGen {
                     if(Settings.authorSettings.borderSettings.includeStretch) {
                         borderOptions.Add(BorderOption.Stretch);
                     }
-                    HashSet<LoadScreenChoice> loadScreenChoices = new();
-                    if(Settings.authorSettings.choiceSettings.includeStandalone) {
-                        loadScreenChoices.Add(LoadScreenChoice.Standalone);
+                    HashSet<LoadingScreenPriority> loadScreenPriorities = new();
+                    if(Settings.authorSettings.prioritySettings.includeStandalone) {
+                        loadScreenPriorities.Add(LoadingScreenPriority.Standalone);
                     }
-                    if(Settings.authorSettings.choiceSettings.includeReplacer) {
-                        loadScreenChoices.Add(LoadScreenChoice.Replacer);
+                    if(Settings.authorSettings.prioritySettings.includeReplacer) {
+                        loadScreenPriorities.Add(LoadingScreenPriority.Replacer);
                     }
-                    if(Settings.authorSettings.choiceSettings.includeFrequency) {
-                        loadScreenChoices.Add(LoadScreenChoice.Frequency);
+                    if(Settings.authorSettings.prioritySettings.includeFrequency) {
+                        loadScreenPriorities.Add(LoadingScreenPriority.Frequency);
                     }
-                    if(Settings.authorSettings.choiceSettings.includeMcm) {
-                        loadScreenChoices.Add(LoadScreenChoice.Mcm);
+                    if(Settings.authorSettings.prioritySettings.includeMcm) {
+                        loadScreenPriorities.Add(LoadingScreenPriority.Mcm);
                     }
-                    if(Settings.authorSettings.choiceSettings.includeDebug) {
-                        loadScreenChoices.Add(LoadScreenChoice.Debug);
+                    if(Settings.authorSettings.prioritySettings.includeDebug) {
+                        loadScreenPriorities.Add(LoadingScreenPriority.Debug);
                     }
 
                     var aspectRatios = AspectRatio.Parse(Settings.authorSettings.aspectRatios);
@@ -131,43 +131,43 @@ namespace LoadScreenGen {
                     var frequencyArray = Settings.authorSettings.frequencyList.Split(",");
                     foreach(var s in frequencyArray) {
                         frequencyList.Add(int.Parse(s));
-                        if(!loadScreenChoices.Contains(LoadScreenChoice.Frequency) && !loadScreenChoices.Contains(LoadScreenChoice.Mcm)) {
+                        if(!loadScreenPriorities.Contains(LoadingScreenPriority.Frequency) && !loadScreenPriorities.Contains(LoadingScreenPriority.Mcm)) {
                             // no frequency choice
                             break;
                         }
                     }
                     defaultFrequency = frequencyList.First();
-                    foreach(var loadScreenChoice in loadScreenChoices) {
+                    foreach(var loadScreenPriority in loadScreenPriorities) {
                         var newFrequencyList = new List<int>();
-                        if((loadScreenChoice == LoadScreenChoice.Frequency) || (loadScreenChoice == LoadScreenChoice.Mcm)) {
+                        if((loadScreenPriority == LoadingScreenPriority.Frequency) || (loadScreenPriority == LoadingScreenPriority.Mcm)) {
                             newFrequencyList.AddRange(frequencyList);
                         } else {
                             newFrequencyList.Add(0);
                         }
                         foreach(var frequency in newFrequencyList) {
                             if(Settings.authorSettings.loadingScreenText != LoadingScreenText.Never) {
-                                CreatePluginOptions(release, state.DataFolderPath, frequency, true, imageArray, loadScreenChoice);
+                                CreatePluginOptions(release, state.DataFolderPath, frequency, true, imageArray, loadScreenPriority);
                             }
                             if(Settings.authorSettings.loadingScreenText != LoadingScreenText.Always) {
-                                CreatePluginOptions(release, state.DataFolderPath, frequency, false, imageArray, loadScreenChoice);
+                                CreatePluginOptions(release, state.DataFolderPath, frequency, false, imageArray, loadScreenPriority);
                             }
                         }
                     }
                     Logger.Log(fomodTmpPath);
-                    FomodGen.CreateFomod(imageArray, aspectRatios, borderOptions, loadScreenChoices, frequencyList, defaultFrequency, imageResolution, targetDirectory);
+                    FomodGen.CreateFomod(imageArray, aspectRatios, borderOptions, loadScreenPriorities, frequencyList, defaultFrequency, imageResolution, targetDirectory);
 
                     //Directory.Delete(fomodTmpPath, true);
                 }
             }
         }
-        public static string GetPluginName(int frequency, bool includeText, LoadScreenChoice loadScreenChoice) {
-            return "FOMOD_M" + (includeText ? "1" : "0") + "_C_" + loadScreenChoice + "_P" + frequency + "_FOMODEND_" + Settings.authorSettings.pluginName;
+        public static string GetPluginName(int frequency, bool includeText, LoadingScreenPriority loadScreenPriority) {
+            return "FOMOD_M" + (includeText ? "1" : "0") + "_C_" + loadScreenPriority + "_P" + frequency + "_FOMODEND_" + Settings.authorSettings.pluginName;
         }
-        public static void CreatePluginOptions(SkyrimRelease release, string dataPath, int frequency, bool includeText, Image[] imageArray, LoadScreenChoice loadScreenChoice) {
-            var pluginPath = GetPluginName(frequency, includeText, loadScreenChoice);
+        public static void CreatePluginOptions(SkyrimRelease release, string dataPath, int frequency, bool includeText, Image[] imageArray, LoadingScreenPriority loadScreenPriority) {
+            var pluginPath = GetPluginName(frequency, includeText, loadScreenPriority);
             pluginPath = Path.Combine(fomodTmpPath, pluginPath);
             var mod = PluginGen.CreateNewEsp(pluginPath, release, dataPath);
-            PluginGen.CreateEsp(mod, imageArray, Settings.authorSettings.modFolder, Settings.authorSettings.pluginPrefix, includeText, frequency, loadScreenChoice);
+            PluginGen.CreateEsp(mod, imageArray, Settings.authorSettings.modFolder, Settings.authorSettings.pluginPrefix, includeText, frequency, loadScreenPriority);
             PluginGen.WriteNewEsp(mod, pluginPath);
         }
     }

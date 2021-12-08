@@ -8,13 +8,6 @@ using System.IO;
 using LoadScreenGen.Settings;
 
 namespace LoadScreenGen {
-    public enum BorderOption {
-        Normal,
-        Crop,
-        FixedHeight,
-        FixedWidth,
-        Stretch,
-    }
 
     public static class MeshGen {
         const double sourceUpperWidth = 45.5;
@@ -27,17 +20,6 @@ namespace LoadScreenGen {
 
         static double heightFactor = 0;
         static double widthFactor = 0;
-
-        public static string ToDescription(this BorderOption borderOption) {
-            return borderOption switch {
-                BorderOption.Normal => "Normal: The image is extended with black to fit the screen. The image will be fully visible.",
-                BorderOption.Crop => "Crop: The image is cropped to fit the screen. Parts of the image will be hidden.",
-                BorderOption.FixedHeight => "FixedHeight: Image will be fit to the screen height. On the sides, the image is cropped or extended with black to fit the screen.",
-                BorderOption.FixedWidth => "FixedWidth: Image will be fit to the screen width. On the top and bottom, the image is cropped or extended with black to fit the screen.",
-                BorderOption.Stretch => "Stretch: Image will be distorted to fill the entire screen.",
-                _ => "",
-            };
-        }
 
         public static void FitToDisplayRatio(double displayRatio, double imageRatio, BorderOption borderOption) {
             // In the first part, the factors are adjusted, so the model fills the entire screen.

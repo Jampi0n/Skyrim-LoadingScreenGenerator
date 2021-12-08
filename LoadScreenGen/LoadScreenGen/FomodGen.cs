@@ -235,13 +235,13 @@ namespace LoadScreenGen {
             CopyImage("stretch.png", dest);
         }
 
-        public static void CreateFomod(Image[] imageArray, HashSet<AspectRatio> aspectRatios, HashSet<BorderOption> borderOptions, HashSet<LoadScreenChoice> loadScreenChoices, List<int> frequencyList, int defaultFrequency, List<int> imageResolution, List<string> textureDirectory) {
+        public static void CreateFomod(Image[] imageArray, HashSet<AspectRatio> aspectRatios, HashSet<BorderOption> borderOptions, HashSet<LoadingScreenPriority> loadScreenPriorities, List<int> frequencyList, int defaultFrequency, List<int> imageResolution, List<string> textureDirectory) {
             //Directory.GetCurrentDirectory()
             var rootDir = Program.fomodTmpPath;
             var fomodDir = Path.Combine(rootDir, "fomod");
             var mainDir = Path.Combine(fomodDir, "main");
             Directory.CreateDirectory(mainDir);
-            bool useScripts = Program.Settings.authorSettings.choiceSettings.includeMcm || Program.Settings.authorSettings.choiceSettings.includeFrequency;
+            bool useScripts = Program.Settings.authorSettings.prioritySettings.includeMcm || Program.Settings.authorSettings.prioritySettings.includeFrequency;
             if(useScripts) {
                 CopyScripts(Path.Combine(fomodDir, "main", "scripts"));
             }
@@ -253,23 +253,23 @@ namespace LoadScreenGen {
             Directory.Move(Path.Combine(rootDir, "meshes"), Path.Combine(fomodDir, "meshes"));
             CopyImages(Path.Combine(fomodSubDir, "images"));
 
-            foreach(var loadScreenChoice in loadScreenChoices) {
+            foreach(var loadScreenPriority in loadScreenPriorities) {
                 foreach(var iFrequency in frequencyList) {
                     var frequency = iFrequency;
                     bool breakAfter = false;
-                    if(loadScreenChoice != LoadScreenChoice.Frequency && loadScreenChoice != LoadScreenChoice.Mcm) {
+                    if(loadScreenPriority != LoadingScreenPriority.Frequency && loadScreenPriority != LoadingScreenPriority.Mcm) {
                         frequency = 0;
                         breakAfter = true;
                     }
                     if(loadingScreenText != LoadingScreenText.Never) {
-                        var dir = Path.Combine(messagesDir, "" + loadScreenChoice, "" + frequency);
+                        var dir = Path.Combine(messagesDir, "" + loadScreenPriority, "" + frequency);
                         Directory.CreateDirectory(dir);
-                        File.Move(Path.Combine(rootDir, Program.GetPluginName(frequency, true, loadScreenChoice)), Path.Combine(dir, Program.Settings.authorSettings.pluginName));
+                        File.Move(Path.Combine(rootDir, Program.GetPluginName(frequency, true, loadScreenPriority)), Path.Combine(dir, Program.Settings.authorSettings.pluginName));
                     }
                     if(loadingScreenText != LoadingScreenText.Always) {
-                        var dir = Path.Combine(noMessagesDir, "" + loadScreenChoice, "" + frequency);
+                        var dir = Path.Combine(noMessagesDir, "" + loadScreenPriority, "" + frequency);
                         Directory.CreateDirectory(dir);
-                        File.Move(Path.Combine(rootDir, Program.GetPluginName(frequency, false, loadScreenChoice)), Path.Combine(dir, Program.Settings.authorSettings.pluginName));
+                        File.Move(Path.Combine(rootDir, Program.GetPluginName(frequency, false, loadScreenPriority)), Path.Combine(dir, Program.Settings.authorSettings.pluginName));
                     }
                     if(breakAfter) {
                         break;
@@ -346,16 +346,16 @@ namespace LoadScreenGen {
                 chooseMessages.AddOption(no);
                 fomod.AddInstallStep(chooseMessages);
                 // no other plugin choices
-                if(loadScreenChoices.Count == 1 && frequencyList.Count == 1) {
-                    yes.AddFolder(Path.Combine("messages", loadScreenChoices.First().ToString(), frequencyList.First().ToString()), "");
-                    no.AddFolder(Path.Combine("no_messages", loadScreenChoices.First().ToString(), frequencyList.First().ToString()), "");
+                if(loadScreenPriorities.Count == 1 && frequencyList.Count == 1) {
+                    yes.AddFolder(Path.Combine("messages", loadScreenPriorities.First().ToString(), frequencyList.First().ToString()), "");
+                    no.AddFolder(Path.Combine("no_messages", loadScreenPriorities.First().ToString(), frequencyList.First().ToString()), "");
                 }
-            } else if(loadingScreenText == LoadingScreenText.Always && loadScreenChoices.Count == 1 && frequencyList.Count == 1) {
+            } else if(loadingScreenText == LoadingScreenText.Always && loadScreenPriorities.Count == 1 && frequencyList.Count == 1) {
                 // no other plugin choices
-                fomod.AddRequiredFolder(Path.Combine("messages", loadScreenChoices.First().ToString(), frequencyList.First().ToString()), "");
-            } else if(loadingScreenText == LoadingScreenText.Never && loadScreenChoices.Count == 1 && frequencyList.Count == 1) {
+                fomod.AddRequiredFolder(Path.Combine("messages", loadScreenPriorities.First().ToString(), frequencyList.First().ToString()), "");
+            } else if(loadingScreenText == LoadingScreenText.Never && loadScreenPriorities.Count == 1 && frequencyList.Count == 1) {
                 // no other plugin choices
-                fomod.AddRequiredFolder(Path.Combine("no_messages", loadScreenChoices.First().ToString(), frequencyList.First().ToString()), "");
+                fomod.AddRequiredFolder(Path.Combine("no_messages", loadScreenPriorities.First().ToString(), frequencyList.First().ToString()), "");
             }
 
             // from now on create two of everything to include the previous choice of loading screen text
@@ -363,50 +363,50 @@ namespace LoadScreenGen {
             // no = no messages
 
             // has multiple loading screen priorities
-            if(loadScreenChoices.Count > 1) {
+            if(loadScreenPriorities.Count > 1) {
                 
-                var chooseLoadScreenChoicesYes = new InstallStep("Loading Screen Priority");
-                var chooseLoadScreenChoicesNo = new InstallStep("Loading Screen Priority");
+                var chooseloadScreenPrioritiesYes = new InstallStep("Loading Screen Priority");
+                var chooseloadScreenPrioritiesNo = new InstallStep("Loading Screen Priority");
 
                 // loop all available priorities
-                foreach(var loadScreenChoice in loadScreenChoices) {
+                foreach(var loadScreenPriority in loadScreenPriorities) {
                     var additionalDesc = "";
                     // whether there will be an option to select the frequency in the following page
-                    bool selectFrequency = (loadScreenChoice == LoadScreenChoice.Frequency || loadScreenChoice == LoadScreenChoice.Mcm) && frequencyList.Count > 1;
+                    bool selectFrequency = (loadScreenPriority == LoadingScreenPriority.Frequency || loadScreenPriority == LoadingScreenPriority.Mcm) && frequencyList.Count > 1;
                     if(selectFrequency) {
-                        if(loadScreenChoice == LoadScreenChoice.Frequency) {
+                        if(loadScreenPriority == LoadingScreenPriority.Frequency) {
                             additionalDesc = " The frequency can be configured on the next page.";
                         }
                     } else {
-                        if(loadScreenChoice == LoadScreenChoice.Frequency) {
+                        if(loadScreenPriority == LoadingScreenPriority.Frequency) {
                             additionalDesc = " The frequency is " + frequencyList.First() + "%.";
                         }
                     }
 
                     // if frequency is not configurable, there are no additional plugin choices
-                    // otherwise use flag "loadScreenChoice_" + loadScreenChoice to store the priority choice
+                    // otherwise use flag "loadScreenPriority_" + loadScreenPriority to store the priority choice
 
-                    var loadScreenChoiceOptionYes = new InstallOption(loadScreenChoice.ToString(), loadScreenChoice.ToDescription() + additionalDesc);
+                    var loadScreenPriorityOptionYes = new InstallOption(loadScreenPriority.ToString(), loadScreenPriority.ToDescription() + additionalDesc);
                     if(!selectFrequency) {
-                        loadScreenChoiceOptionYes.AddFolder(Path.Combine("messages", "" + loadScreenChoice, "" + frequencyList.First()), "");
+                        loadScreenPriorityOptionYes.AddFolder(Path.Combine("messages", "" + loadScreenPriority, "" + frequencyList.First()), "");
                     } else {
-                        loadScreenChoiceOptionYes.AddFlag("loadScreenChoice_" + loadScreenChoice, "true");
+                        loadScreenPriorityOptionYes.AddFlag("loadScreenPriority_" + loadScreenPriority, "true");
                     }
-                    chooseLoadScreenChoicesYes.AddOption(loadScreenChoiceOptionYes);
+                    chooseloadScreenPrioritiesYes.AddOption(loadScreenPriorityOptionYes);
 
-                    var loadScreenChoiceOptionNo = new InstallOption(loadScreenChoice.ToString(), loadScreenChoice.ToDescription() + additionalDesc);
+                    var loadScreenPriorityOptionNo = new InstallOption(loadScreenPriority.ToString(), loadScreenPriority.ToDescription() + additionalDesc);
                     if(!selectFrequency) {
-                        loadScreenChoiceOptionYes.AddFolder(Path.Combine("no_messages", "" + loadScreenChoice, "" + frequencyList.First()), "");
+                        loadScreenPriorityOptionYes.AddFolder(Path.Combine("no_messages", "" + loadScreenPriority, "" + frequencyList.First()), "");
                     } else {
-                        loadScreenChoiceOptionYes.AddFlag("loadScreenChoice_" + loadScreenChoice, "true");
+                        loadScreenPriorityOptionYes.AddFlag("loadScreenPriority_" + loadScreenPriority, "true");
                     }
-                    chooseLoadScreenChoicesNo.AddOption(loadScreenChoiceOptionNo);
+                    chooseloadScreenPrioritiesNo.AddOption(loadScreenPriorityOptionNo);
 
                     // set the priority default
                     // again twice for messages and no messages
-                    if(loadScreenChoice == Program.Settings.authorSettings.choiceSettings.defaultChoiceSetting) {
-                        loadScreenChoiceOptionYes.SetDefault();
-                        loadScreenChoiceOptionNo.SetDefault();
+                    if(loadScreenPriority == Program.Settings.authorSettings.prioritySettings.defaultPrioritySetting) {
+                        loadScreenPriorityOptionYes.SetDefault();
+                        loadScreenPriorityOptionNo.SetDefault();
                     }
                 }
 
@@ -414,25 +414,25 @@ namespace LoadScreenGen {
 
                 // if messages are optional, the two steps are both added and conditionally selected based on the flag
                 if(loadingScreenText == LoadingScreenText.Optional) {
-                    chooseLoadScreenChoicesYes.RequireFlag("loading_screen_messages", "true");
-                    chooseLoadScreenChoicesNo.RequireFlag("loading_screen_messages", "false");
-                    fomod.AddInstallStep(chooseLoadScreenChoicesYes);
-                    fomod.AddInstallStep(chooseLoadScreenChoicesNo);
+                    chooseloadScreenPrioritiesYes.RequireFlag("loading_screen_messages", "true");
+                    chooseloadScreenPrioritiesNo.RequireFlag("loading_screen_messages", "false");
+                    fomod.AddInstallStep(chooseloadScreenPrioritiesYes);
+                    fomod.AddInstallStep(chooseloadScreenPrioritiesNo);
                 }
                 // if messages are fixed, the corresponding step is added
                 if(loadingScreenText == LoadingScreenText.Always) {
-                    fomod.AddInstallStep(chooseLoadScreenChoicesYes);
+                    fomod.AddInstallStep(chooseloadScreenPrioritiesYes);
                 }
                 if(loadingScreenText == LoadingScreenText.Never) {
-                    fomod.AddInstallStep(chooseLoadScreenChoicesNo);
+                    fomod.AddInstallStep(chooseloadScreenPrioritiesNo);
                 }
 
                 // now the frequency choice is added
                 if(frequencyList.Count > 1) {
                     // only consider Frequency and Mcm
-                    var validOptions = new HashSet<LoadScreenChoice>() { LoadScreenChoice.Frequency, LoadScreenChoice.Mcm };
-                    validOptions.IntersectWith(loadScreenChoices);
-                    foreach(var loadScreenChoice in validOptions) {
+                    var validOptions = new HashSet<LoadingScreenPriority>() { LoadingScreenPriority.Frequency, LoadingScreenPriority.Mcm };
+                    validOptions.IntersectWith(loadScreenPriorities);
+                    foreach(var loadScreenPriority in validOptions) {
                         // do everything for messages and no messages and also for all loading screen priorities
                         var chooseFrequencyYes = new InstallStep("Loading Screen Frequency");
                         var chooseFrequencyNo = new InstallStep("Loading Screen Frequency");
@@ -440,7 +440,7 @@ namespace LoadScreenGen {
 
                         foreach(var frequency in frequencyList) {
                             var desc = "Controls how often the loading screens appear. With a frequency of 100%, loading screens from vanilla and vanilla compatible loading screen mods will no longer be used.";
-                            if(loadScreenChoice == LoadScreenChoice.Mcm) {
+                            if(loadScreenPriority == LoadingScreenPriority.Mcm) {
                                 desc += " This is only the default frequency. It can also be configured in the Mod Configuration Menu";
                             }
 
@@ -460,8 +460,8 @@ namespace LoadScreenGen {
                         
 
                         // add condition on the loading screen priority
-                        chooseFrequencyYes.RequireFlag("loadScreenChoice_" + loadScreenChoice, "true");
-                        chooseFrequencyNo.RequireFlag("loadScreenChoice_" + loadScreenChoice, "true");
+                        chooseFrequencyYes.RequireFlag("loadScreenPriority_" + loadScreenPriority, "true");
+                        chooseFrequencyNo.RequireFlag("loadScreenPriority_" + loadScreenPriority, "true");
                         // the existing two steps for messages and no messages are added
                         // if messages are optional, the two steps are both added and conditionally selected based on the flag
                         if(loadingScreenText == LoadingScreenText.Optional) {
@@ -487,17 +487,17 @@ namespace LoadScreenGen {
             // no priority choices + frequency choices
 
             // this is almost the same as before
-            // the only difference is that loadScreenChoices.First() is used, since there is only one choice
-            if(loadScreenChoices.Count == 1 && frequencyList.Count > 1) {
-                var validOptions = new HashSet<LoadScreenChoice>() { LoadScreenChoice.Frequency, LoadScreenChoice.Mcm };
-                validOptions.IntersectWith(loadScreenChoices);
+            // the only difference is that loadScreenPriorities.First() is used, since there is only one choice
+            if(loadScreenPriorities.Count == 1 && frequencyList.Count > 1) {
+                var validOptions = new HashSet<LoadingScreenPriority>() { LoadingScreenPriority.Frequency, LoadingScreenPriority.Mcm };
+                validOptions.IntersectWith(loadScreenPriorities);
                 var choose_frequency_yes = new InstallStep("Loading Screen Frequency");
                 var choose_frequency_no = new InstallStep("Loading Screen Frequency");
 
 
                 foreach(var frequency in frequencyList) {
                     var desc = "Controls how often the loading screens appear. With a frequency of 100%, loading screens from vanilla and vanilla compatible loading screen mods will no longer be used.";
-                    if(loadScreenChoices.First() == LoadScreenChoice.Mcm) {
+                    if(loadScreenPriorities.First() == LoadingScreenPriority.Mcm) {
                         desc += " This is only the default frequency. It can be configured in the Mod Configuration Menu";
                     }
 
