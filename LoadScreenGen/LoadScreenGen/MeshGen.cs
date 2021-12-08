@@ -28,6 +28,17 @@ namespace LoadScreenGen {
         static double heightFactor = 0;
         static double widthFactor = 0;
 
+        public static string ToDescription(this BorderOption borderOption) {
+            return borderOption switch {
+                BorderOption.Normal => "Normal: The image is extended with black to fit the screen. The image will be fully visible.",
+                BorderOption.Crop => "Crop: The image is cropped to fit the screen. Parts of the image will be hidden.",
+                BorderOption.FixedHeight => "FixedHeight: Image will be fit to the screen height. On the sides, the image is cropped or extended with black to fit the screen.",
+                BorderOption.FixedWidth => "FixedWidth: Image will be fit to the screen width. On the top and bottom, the image is cropped or extended with black to fit the screen.",
+                BorderOption.Stretch => "Stretch: Image will be distorted to fill the entire screen.",
+                _ => "",
+            };
+        }
+
         public static void FitToDisplayRatio(double displayRatio, double imageRatio, BorderOption borderOption) {
             // In the first part, the factors are adjusted, so the model fills the entire screen.
             // A width of 1.0 means the entire width of the image is visible on the screen, so width stays at 1.
@@ -72,11 +83,15 @@ namespace LoadScreenGen {
             // Write result.
             widthFactor = width;
             heightFactor = height;
-            Logger.Log(""+width);
-            Logger.Log(""+height);
+            Logger.Log("" + width);
+            Logger.Log("" + height);
         }
 
         public static void CreateMeshes(List<Image> imageList, string targetDirectory, string textureDirectory, string templatePath, double displayRatio, BorderOption borderOption) {
+            foreach(var image in imageList) {
+                var savePath = Path.Combine(targetDirectory, image.skyrimPath + ".nif.txt");
+                File.WriteAllText(savePath, "Texture=" + Path.Combine(textureDirectory, image.skyrimPath + ".dds") + "\ndisplayRatio=" + displayRatio + "\nborderOption=" + borderOption);
+            }
             /*var templateNif = new NifFile();
             templateNif.Load(templatePath);
             int i = 0;

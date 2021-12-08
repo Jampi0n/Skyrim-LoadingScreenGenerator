@@ -8,13 +8,6 @@ using Mutagen.Bethesda.Synthesis.Settings;
 namespace LoadScreenGen.Settings {
 
     public class MainSettings {
-
-        [SynthesisSettingName("Source Path")]
-        public string sourcePath = "";
-
-        [SynthesisSettingName("Include sub directories")]
-        public bool includeSubDirs  = true;
-
         [SynthesisSettingName("User Settings (Generate Loading Screens for you)")]
         public UserSettings userSettings = new();
 

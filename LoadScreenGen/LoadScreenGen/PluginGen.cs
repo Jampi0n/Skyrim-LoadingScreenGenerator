@@ -220,5 +220,17 @@ namespace LoadScreenGen {
                 }
             }
         }
+
+        public static ISkyrimMod CreateNewEsp(string pluginPath, SkyrimRelease release, string dataPath) {
+            var skyrimEsmPath = Path.Combine(dataPath, "Skyrim.esm");
+            using ISkyrimModDisposableGetter skyrimESM = SkyrimMod.CreateFromBinaryOverlay(skyrimEsmPath, release);
+
+
+            return new SkyrimMod(ModKey.FromNameAndExtension(Path.GetFileName(pluginPath)), release);
+        }
+
+        public static void WriteNewEsp(ISkyrimMod mod, string pluginPath) {
+            mod.WriteToBinaryParallel(pluginPath);
+        }
     }
 }

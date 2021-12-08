@@ -11,9 +11,9 @@ using LoadScreenGen.Settings;
 namespace LoadScreenGen {
     public class Program {
 
-        public static string fomodTmpPath = "JLoadScreens_AuthorOutput";
+        public static string fomodTmpPath = "";
 
-        public static string extraDataPath = "";
+        public static string resourceDirectory = "";
         public static IPatcherState<ISkyrimMod, ISkyrimModGetter>? state = null;
 
         static Lazy<MainSettings> _Settings = null!;
@@ -32,45 +32,54 @@ namespace LoadScreenGen {
 
         public static void RunPatch(IPatcherState<ISkyrimMod, ISkyrimModGetter> state) {
             //Your code here!
-            Program.extraDataPath = state.ExtraSettingsDataPath;
+            Program.resourceDirectory = state.ExtraSettingsDataPath;
             Program.state = state;
 
             var sse = state.GameRelease != GameRelease.SkyrimLE && state.GameRelease != GameRelease.EnderalLE;
-            string templatePath = "";
+            string templatePath;
             if(sse) {
-                templatePath = Path.Combine(extraDataPath, "TemplateSSE.nif");
+                templatePath = Path.Combine(resourceDirectory, "TemplateSSE.nif");
             } else {
-                templatePath = Path.Combine(extraDataPath, "TemplateLE.nif");
+                templatePath = Path.Combine(resourceDirectory, "TemplateLE.nif");
             }
+            SkyrimRelease release = sse ? SkyrimRelease.SkyrimSE : SkyrimRelease.SkyrimLE;
 
 
 
-            if(Directory.Exists(Settings.sourcePath)) {
-                if(!Settings.authorSettings.enableAuthorMode) {
-                    var imageArray = TextureGen.ProcessTextures(Settings.sourcePath, new string[] { Path.Combine(state.DataFolderPath, "textures", Settings.userSettings.defaultModFolder) }, new int[] { Settings.userSettings.imageResolution });
+
+            if(!Settings.authorSettings.enableAuthorMode) {
+                if(Directory.Exists(Settings.userSettings.sourcePath)) {
+                    var imageArray = TextureGen.ProcessTextures(Settings.userSettings.sourcePath, new string[] { Path.Combine(state.DataFolderPath, "textures", Settings.userSettings.defaultModFolder) }, new int[] { Settings.userSettings.imageResolution }, Settings.userSettings.includeSubDirs);
 
                     string meshDirectory = Path.Combine(state.DataFolderPath, "meshes", Settings.userSettings.defaultModFolder);
                     string textureDirectory = Path.Combine("textures", Settings.userSettings.defaultModFolder);
                     Directory.CreateDirectory(meshDirectory);
                     MeshGen.CreateMeshes(imageArray.ToList(), meshDirectory, textureDirectory, templatePath, Settings.userSettings.screenWidth * 1.0 / Settings.userSettings.screenHeight, Settings.userSettings.borderOption);
-                    PluginGen.CreateEsp(state.PatchMod, imageArray, Settings.userSettings.defaultModFolder, "JLS_", true, Settings.userSettings.frequency, Settings.userSettings.loadScreenChoice);
-                } else {
+                    PluginGen.CreateEsp(state.PatchMod, imageArray, Settings.userSettings.defaultModFolder, Settings.userSettings.defaultPrefix, true, Settings.userSettings.frequency, Settings.userSettings.loadScreenChoice);
+                }
+            } else {
+                if(Directory.Exists(Settings.authorSettings.sourcePath)) {
+                    fomodTmpPath = Path.Combine(Path.GetTempPath(), "JLoadScreens");
+                    Directory.CreateDirectory(fomodTmpPath);
+                    Directory.Delete(fomodTmpPath, true);
+                    Directory.CreateDirectory(fomodTmpPath);
+
                     var targetDirectory = new List<string>();
                     var imageResolution = new List<int>();
 
-                    targetDirectory.Add(Path.Combine(state.DataFolderPath, fomodTmpPath, "textures", "2K"));
+                    targetDirectory.Add(Path.Combine(Path.Combine(state.DataFolderPath, fomodTmpPath, "textures", "2K"), "textures", Settings.authorSettings.modFolder));
                     imageResolution.Add(2048);
                     if(Settings.authorSettings.resolutionSettings.fourK) {
-                        targetDirectory.Add(Path.Combine(state.DataFolderPath, fomodTmpPath, "textures", "4K"));
+                        targetDirectory.Add(Path.Combine(Path.Combine(state.DataFolderPath, fomodTmpPath, "textures", "4K"), "textures", Settings.authorSettings.modFolder));
                         imageResolution.Add(4096);
                     }
                     if(Settings.authorSettings.resolutionSettings.eightK) {
-                        targetDirectory.Add(Path.Combine(state.DataFolderPath, fomodTmpPath, "textures", "8K"));
+                        targetDirectory.Add(Path.Combine(Path.Combine(state.DataFolderPath, fomodTmpPath, "textures", "8K"), "textures", Settings.authorSettings.modFolder));
                         imageResolution.Add(8192);
                     }
-                    
+
                     string textureDirectory = Path.Combine("textures", Settings.authorSettings.modFolder);
-                    var imageArray = TextureGen.ProcessTextures(Settings.sourcePath, targetDirectory.ToArray(), imageResolution.ToArray());
+                    var imageArray = TextureGen.ProcessTextures(Settings.authorSettings.sourcePath, targetDirectory.ToArray(), imageResolution.ToArray(), Settings.authorSettings.includeSubDirs);
                     HashSet<BorderOption> borderOptions = new();
                     if(Settings.authorSettings.borderSettings.includeNormal) {
                         borderOptions.Add(BorderOption.Normal);
@@ -94,29 +103,59 @@ namespace LoadScreenGen {
                             string meshDirectory = Path.Combine(state.DataFolderPath, fomodTmpPath, "meshes");
                             meshDirectory = Path.Combine(meshDirectory, "" + aspectRatio);
                             meshDirectory = Path.Combine(meshDirectory, "" + borderOption);
+                            meshDirectory = Path.Combine(meshDirectory, "meshes", Settings.authorSettings.modFolder);
+                            Directory.CreateDirectory(meshDirectory);
                             Logger.Log(meshDirectory);
                             MeshGen.CreateMeshes(imageArray.ToList(), meshDirectory, textureDirectory, templatePath, displayRatio, borderOption);
                         }
                     }
+                    List<int> frequencyList = new();
+                    int defaultFrequency = 0;
+                    if(Settings.authorSettings.loadScreenChoice == LoadScreenChoice.Mcm || Settings.authorSettings.loadScreenChoice == LoadScreenChoice.Frequency) {
+                        var frequencyArray = Settings.authorSettings.frequencyList.Split(",");
+                        foreach(var s in frequencyArray) {
+                            frequencyList.Add(int.Parse(s));
+                        }
+                        defaultFrequency = frequencyList.First();
+                    } else {
+                        frequencyList.Add(0);
+                    }
+                    foreach(var frequency in frequencyList) {
+                        if(Settings.authorSettings.loadingScreenText != LoadingScreenText.Never) {
+                            CreatePluginOptions(release, state.DataFolderPath, frequency, true, imageArray);
+                        }
+                        if(Settings.authorSettings.loadingScreenText != LoadingScreenText.Always) {
+                            CreatePluginOptions(release, state.DataFolderPath, frequency, false, imageArray);
+                        }
+                    }
+                    Logger.Log(fomodTmpPath);
+                    FomodGen.CreateFomod(imageArray, aspectRatios, borderOptions, frequencyList, defaultFrequency, imageResolution, targetDirectory);
 
+                    //Directory.Delete(fomodTmpPath, true);
                 }
-            } else {
-                Console.WriteLine("Source path does not exist.");
             }
+        }
+        public static string GetPluginName(int frequency, bool includeText) {
+            return "FOMOD_M" + (includeText ? "1" : "0") + "_P" + frequency + "_FOMODEND_" + Settings.authorSettings.pluginName;
+        }
+        public static void CreatePluginOptions(SkyrimRelease release, string dataPath, int frequency, bool includeText, Image[] imageArray) {
+            var pluginPath = GetPluginName(frequency, includeText);
+            pluginPath = Path.Combine(fomodTmpPath, pluginPath);
+            var mod = PluginGen.CreateNewEsp(pluginPath, release, dataPath);
+            PluginGen.CreateEsp(mod, imageArray, Settings.authorSettings.modFolder, Settings.authorSettings.pluginPrefix, includeText, frequency, Settings.authorSettings.loadScreenChoice);
+            PluginGen.WriteNewEsp(mod, pluginPath);
         }
     }
     public class AspectRatio {
         public int w;
         public int h;
         public AspectRatio(int w, int h) {
-            var gcd = MathUtils.GCD(w, h);
-            this.w = w / gcd;
-            this.h = h / gcd;
+            this.w = w;
+            this.h = h;
         }
 
         public override bool Equals(object? obj) {
-            var asAspectRatio = obj as AspectRatio;
-            if(asAspectRatio != null) {
+            if(obj is AspectRatio asAspectRatio) {
                 return asAspectRatio.w == w && asAspectRatio.h == h;
             }
             return false;

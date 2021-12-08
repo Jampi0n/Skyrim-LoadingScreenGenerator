@@ -26,9 +26,9 @@ namespace LoadScreenGen {
         /// </summary>
         public string text;
 
-        public Image(string path) {
+        public Image(string path, string sourcePath) {
             this.path = path;
-            this.skyrimPath = Path.GetRelativePath(Program.Settings.sourcePath, Path.ChangeExtension(path, ""));
+            this.skyrimPath = Path.GetRelativePath(sourcePath, Path.ChangeExtension(path, ""));
             this.width = 0;
             this.height = 0;
             this.text = "";
@@ -47,7 +47,7 @@ namespace LoadScreenGen {
         /// <param name="fileName">Program to run.</param>
         /// <param name="args">Arguments.</param>
         /// <returns>Standard ouput of the program.</returns>
-        static string ShellExecuteWait(string fileName, string args) {
+        public static string ShellExecuteWait(string fileName, string args) {
             var pProcess = new Process();
             pProcess.StartInfo.FileName = fileName;
             pProcess.StartInfo.Arguments = args;
@@ -65,9 +65,9 @@ namespace LoadScreenGen {
         /// <param name="targetDirectory">Array of target directories. Textures for the i-th image resolution will be created in the i-th target directory.</param>
         /// <param name="imageResolution">Array of image resolutions in pixels (e.g. 2048). Textures for the i-th image resolution will be created in the i-th target directory.</param>
         /// <returns>Array of images found.</returns>
-        public static Image[] ProcessTextures(string sourceDirectory, string[] targetDirectory, int[] imageResolution) {
+        public static Image[] ProcessTextures(string sourceDirectory, string[] targetDirectory, int[] imageResolution, bool includeSubDirs) {
             var imageList = new List<string>();
-            SearchOption searchOption = Program.Settings.includeSubDirs ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly;
+            SearchOption searchOption = includeSubDirs ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly;
             // Add all image files to a list.
             Logger.Log("Scanning source directory for valid source images...\n");
 
@@ -80,7 +80,7 @@ namespace LoadScreenGen {
             int i = 0;
             foreach(var imagePath in imageList) {
 
-                imageArray[i] = new Image(imagePath);
+                imageArray[i] = new Image(imagePath, sourceDirectory);
                 i++;
             }
 
@@ -104,7 +104,7 @@ namespace LoadScreenGen {
 
                     // use texdiag to read input format
 
-                    string texInfo = ShellExecuteWait(Path.Combine(Program.extraDataPath, "DirectXTex", "texdiag.exe"), "info \"" + image.path + "\" -nologo");
+                    string texInfo = ShellExecuteWait(Path.Combine(Program.resourceDirectory, "DirectXTex", "texdiag.exe"), "info \"" + image.path + "\" -nologo");
                     srgb = texInfo.Contains("SRGB");
                     var lines = texInfo.Split("\n");
                     image.width = int.Parse(ParseTexDiagOutput(lines[1]));
@@ -121,7 +121,7 @@ namespace LoadScreenGen {
                         // Execute texconv.exe (timeout = 10 seconds)
                         Directory.CreateDirectory(targetDirectory[j]);
                         string args = "-f BC1_UNORM " + srgbCmd + "-o \"" + targetDirectory[j] + "\" -y -w " + resolution + " -h " + resolution + " \"" + image.path + "\"";
-                        ShellExecuteWait(Path.Combine(Program.extraDataPath, "DirectXTex", "texconv.exe"), args);
+                        ShellExecuteWait(Path.Combine(Program.resourceDirectory, "DirectXTex", "texconv.exe"), args);
                     }
                 }
 
