@@ -20,6 +20,18 @@ namespace LoadScreenGen {
         Debug
     }
 
+    public static class StaticLoadScreenChoice {
+        public static string ToDescription(this LoadScreenChoice borderOption) {
+            return borderOption switch {
+                LoadScreenChoice.Standalone => "Standalone: Loading screens will be added and used alongside vanilla loading screens.",
+                LoadScreenChoice.Replacer => "Replacer: Loading screens will be prioritized over vanilla loading screens.",
+                LoadScreenChoice.Frequency => "Frequency: Loading screens appear at a certain frequency instead of vanilla loading screens.",
+                LoadScreenChoice.Mcm => "Mcm: Loading screens appear at a certain frequency instead of vanilla loading screens. The frequency can be configured in a Mod Configuration Menu.",
+                LoadScreenChoice.Debug => "Debug: The loading screen that appears depends on a global variable. Change the variable in the in-game console to force a certain loading screen.",
+                _ => "",
+            };
+        }
+    }
 
     class PluginStandalone : PluginGen {
         protected override void Setup() { }

@@ -96,6 +96,23 @@ namespace LoadScreenGen {
                     if(Settings.authorSettings.borderSettings.includeStretch) {
                         borderOptions.Add(BorderOption.Stretch);
                     }
+                    HashSet<LoadScreenChoice> loadScreenChoices = new();
+                    if(Settings.authorSettings.choiceSettings.includeStandalone) {
+                        loadScreenChoices.Add(LoadScreenChoice.Standalone);
+                    }
+                    if(Settings.authorSettings.choiceSettings.includeReplacer) {
+                        loadScreenChoices.Add(LoadScreenChoice.Replacer);
+                    }
+                    if(Settings.authorSettings.choiceSettings.includeFrequency) {
+                        loadScreenChoices.Add(LoadScreenChoice.Frequency);
+                    }
+                    if(Settings.authorSettings.choiceSettings.includeMcm) {
+                        loadScreenChoices.Add(LoadScreenChoice.Mcm);
+                    }
+                    if(Settings.authorSettings.choiceSettings.includeDebug) {
+                        loadScreenChoices.Add(LoadScreenChoice.Debug);
+                    }
+
                     var aspectRatios = AspectRatio.Parse(Settings.authorSettings.aspectRatios);
                     foreach(var borderOption in borderOptions) {
                         foreach(var aspectRatio in aspectRatios) {
@@ -110,39 +127,47 @@ namespace LoadScreenGen {
                         }
                     }
                     List<int> frequencyList = new();
-                    int defaultFrequency = 0;
-                    if(Settings.authorSettings.loadScreenChoice == LoadScreenChoice.Mcm || Settings.authorSettings.loadScreenChoice == LoadScreenChoice.Frequency) {
-                        var frequencyArray = Settings.authorSettings.frequencyList.Split(",");
-                        foreach(var s in frequencyArray) {
-                            frequencyList.Add(int.Parse(s));
+                    int defaultFrequency;
+                    var frequencyArray = Settings.authorSettings.frequencyList.Split(",");
+                    foreach(var s in frequencyArray) {
+                        frequencyList.Add(int.Parse(s));
+                        if(!loadScreenChoices.Contains(LoadScreenChoice.Frequency) && !loadScreenChoices.Contains(LoadScreenChoice.Mcm)) {
+                            // no frequency choice
+                            break;
                         }
-                        defaultFrequency = frequencyList.First();
-                    } else {
-                        frequencyList.Add(0);
                     }
-                    foreach(var frequency in frequencyList) {
-                        if(Settings.authorSettings.loadingScreenText != LoadingScreenText.Never) {
-                            CreatePluginOptions(release, state.DataFolderPath, frequency, true, imageArray);
+                    defaultFrequency = frequencyList.First();
+                    foreach(var loadScreenChoice in loadScreenChoices) {
+                        var newFrequencyList = new List<int>();
+                        if((loadScreenChoice == LoadScreenChoice.Frequency) || (loadScreenChoice == LoadScreenChoice.Mcm)) {
+                            newFrequencyList.AddRange(frequencyList);
+                        } else {
+                            newFrequencyList.Add(0);
                         }
-                        if(Settings.authorSettings.loadingScreenText != LoadingScreenText.Always) {
-                            CreatePluginOptions(release, state.DataFolderPath, frequency, false, imageArray);
+                        foreach(var frequency in newFrequencyList) {
+                            if(Settings.authorSettings.loadingScreenText != LoadingScreenText.Never) {
+                                CreatePluginOptions(release, state.DataFolderPath, frequency, true, imageArray, loadScreenChoice);
+                            }
+                            if(Settings.authorSettings.loadingScreenText != LoadingScreenText.Always) {
+                                CreatePluginOptions(release, state.DataFolderPath, frequency, false, imageArray, loadScreenChoice);
+                            }
                         }
                     }
                     Logger.Log(fomodTmpPath);
-                    FomodGen.CreateFomod(imageArray, aspectRatios, borderOptions, frequencyList, defaultFrequency, imageResolution, targetDirectory);
+                    FomodGen.CreateFomod(imageArray, aspectRatios, borderOptions, loadScreenChoices, frequencyList, defaultFrequency, imageResolution, targetDirectory);
 
                     //Directory.Delete(fomodTmpPath, true);
                 }
             }
         }
-        public static string GetPluginName(int frequency, bool includeText) {
-            return "FOMOD_M" + (includeText ? "1" : "0") + "_P" + frequency + "_FOMODEND_" + Settings.authorSettings.pluginName;
+        public static string GetPluginName(int frequency, bool includeText, LoadScreenChoice loadScreenChoice) {
+            return "FOMOD_M" + (includeText ? "1" : "0") + "_C_" + loadScreenChoice + "_P" + frequency + "_FOMODEND_" + Settings.authorSettings.pluginName;
         }
-        public static void CreatePluginOptions(SkyrimRelease release, string dataPath, int frequency, bool includeText, Image[] imageArray) {
-            var pluginPath = GetPluginName(frequency, includeText);
+        public static void CreatePluginOptions(SkyrimRelease release, string dataPath, int frequency, bool includeText, Image[] imageArray, LoadScreenChoice loadScreenChoice) {
+            var pluginPath = GetPluginName(frequency, includeText, loadScreenChoice);
             pluginPath = Path.Combine(fomodTmpPath, pluginPath);
             var mod = PluginGen.CreateNewEsp(pluginPath, release, dataPath);
-            PluginGen.CreateEsp(mod, imageArray, Settings.authorSettings.modFolder, Settings.authorSettings.pluginPrefix, includeText, frequency, Settings.authorSettings.loadScreenChoice);
+            PluginGen.CreateEsp(mod, imageArray, Settings.authorSettings.modFolder, Settings.authorSettings.pluginPrefix, includeText, frequency, loadScreenChoice);
             PluginGen.WriteNewEsp(mod, pluginPath);
         }
     }

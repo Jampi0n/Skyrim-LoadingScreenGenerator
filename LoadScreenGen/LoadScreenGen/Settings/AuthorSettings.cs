@@ -20,6 +20,16 @@ namespace LoadScreenGen.Settings {
         public bool includeStretch = true;
         public BorderOption defaultBorderOption = BorderOption.Normal;
     }
+
+    public class ChoiceSettings {
+        public bool includeStandalone = true;
+        public bool includeReplacer = true;
+        public bool includeFrequency = true;
+        public bool includeMcm = true;
+        public bool includeDebug = false;
+        public LoadScreenChoice defaultChoiceSetting = LoadScreenChoice.Standalone;
+    }
+
     public class ResolutionSettings {
         [SynthesisTooltip("Additionally creates 4K textures (2K option is always included).")]
         public bool fourK = true;
@@ -69,8 +79,8 @@ namespace LoadScreenGen.Settings {
         public string aspectRatios = "4:3,16:10,16:9,21:9";
 
         [SynthesisSettingName("Loading Screen Choice")]
-        [SynthesisTooltip("Determines when the loading screens will be used.\nStandalone: Loading screens will be added and used alongside vanilla loading screens.\nReplacer: Loading screens will be prioritized over vanilla loading screens.\nFrequency: Loading screens appear at the given frequency instead of vanilla loading screens.\nMcm: The given frequency can additionally be configured in a MCM.\nDebug: The loading screen that appears depends on a global variable. Change the variable in the in-game console to force a certain loading screen.")]
-        public LoadScreenChoice loadScreenChoice = LoadScreenChoice.Mcm;
+
+        public ChoiceSettings choiceSettings = new();
 
         [SynthesisSettingName("Frequency List")]
         [SynthesisTooltip("List of possible frequency choices. The first element will be the default selected item in the Fomod installer.")]
