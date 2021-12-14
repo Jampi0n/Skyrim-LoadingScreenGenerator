@@ -6,6 +6,7 @@ using Mutagen.Bethesda.Synthesis;
 using Mutagen.Bethesda.Skyrim;
 using System.Threading.Tasks;
 using System.IO;
+using System.Text.RegularExpressions;
 using LoadScreenGen.Settings;
 
 namespace LoadScreenGen {
@@ -32,8 +33,12 @@ namespace LoadScreenGen {
 
         public static void RunPatch(IPatcherState<ISkyrimMod, ISkyrimModGetter> state) {
             //Your code here!
-            Program.resourceDirectory = state.ExtraSettingsDataPath;
+            Program.resourceDirectory = state.InternalDataPath ?? "";
             Program.state = state;
+
+            if(Program.resourceDirectory == "" || !Directory.Exists(Program.resourceDirectory)) {
+                throw new DirectoryNotFoundException("Cannot find resource directory.");
+            }
 
             var sse = state.GameRelease != GameRelease.SkyrimLE && state.GameRelease != GameRelease.EnderalLE;
             string templatePath;
@@ -49,6 +54,18 @@ namespace LoadScreenGen {
 
             if(!Settings.authorSettings.enableAuthorMode) {
                 if(Directory.Exists(Settings.userSettings.sourcePath)) {
+                    if(Settings.userSettings.imageResolution != 1024 && Settings.userSettings.imageResolution != 2048 && Settings.userSettings.imageResolution != 4096 && Settings.userSettings.imageResolution != 8192) {
+                        throw new ArgumentException("Image resolution must be 1024, 2048, 4096 or 8192.");
+                    }
+                    if(Settings.userSettings.loadScreenPriority == LoadingScreenPriority.Frequency || Settings.userSettings.loadScreenPriority == LoadingScreenPriority.Mcm) {
+                        if(Settings.userSettings.frequency <= 0) {
+                            throw new ArgumentException("Frequency must be larger than 0.");
+                        }
+                        if(Settings.userSettings.frequency > 100) {
+                            throw new ArgumentException("Frequency must be at most 100.");
+                        }
+                    }
+
                     var imageArray = TextureGen.ProcessTextures(Settings.userSettings.sourcePath, new string[] { Path.Combine(state.DataFolderPath, "textures", Settings.userSettings.defaultModFolder) }, new int[] { Settings.userSettings.imageResolution }, Settings.userSettings.includeSubDirs);
 
                     string meshDirectory = Path.Combine(state.DataFolderPath, "meshes", Settings.userSettings.defaultModFolder);
@@ -56,9 +73,31 @@ namespace LoadScreenGen {
                     Directory.CreateDirectory(meshDirectory);
                     MeshGen.CreateMeshes(imageArray.ToList(), meshDirectory, textureDirectory, templatePath, Settings.userSettings.screenWidth * 1.0 / Settings.userSettings.screenHeight, Settings.userSettings.borderOption);
                     PluginGen.CreateEsp(state.PatchMod, imageArray, Settings.userSettings.defaultModFolder, Settings.userSettings.defaultPrefix, true, Settings.userSettings.frequency, Settings.userSettings.loadScreenPriority);
+                } else {
+                    throw new DirectoryNotFoundException("Cannot find source directory.");
                 }
             } else {
                 if(Directory.Exists(Settings.authorSettings.sourcePath)) {
+                    if(string.IsNullOrEmpty(Settings.authorSettings.modName) || Settings.authorSettings.modName.IndexOfAny(Path.GetInvalidFileNameChars()) >= 0) {
+                        throw new ArgumentException("The mod name is not a valid file name.");
+                    }
+                    if(Settings.authorSettings.modVersion.IndexOfAny(Path.GetInvalidFileNameChars()) >= 0) {
+                        throw new ArgumentException("The mod version contains invalid characters. Only use characters that can be part of file names.");
+                    }
+                    if(string.IsNullOrEmpty(Settings.authorSettings.pluginName) || Settings.authorSettings.pluginName.IndexOfAny(Path.GetInvalidFileNameChars()) >= 0) {
+                        throw new ArgumentException("The plugin name is not a valid file name.");
+                    }
+                    if(!Settings.authorSettings.pluginName.EndsWith(".esp")) {
+                        throw new ArgumentException("The plugin name must end with \".esp\".");
+                    }
+                    var validPrefix = new Regex("[a-zA-Z_][a-zA-Z\\d_]*");
+                    if(validPrefix.Match(Settings.authorSettings.pluginPrefix).Value != Settings.authorSettings.pluginPrefix) {
+                        throw new ArgumentException("The plugin prefix is invalid. It must not be empty and must start with a letter or an underscore. Then any number of letters, digits or underscores may follow.");
+                    }
+                    if(string.IsNullOrEmpty(Settings.authorSettings.modFolder) || Settings.authorSettings.modFolder.IndexOfAny(Path.GetInvalidFileNameChars()) >= 0) {
+                        throw new ArgumentException("The mod folder is not a valid file name.");
+                    }
+
                     fomodTmpPath = Path.Combine(Path.GetTempPath(), "JLoadScreens");
                     Directory.CreateDirectory(fomodTmpPath);
                     Directory.Delete(fomodTmpPath, true);
@@ -96,6 +135,14 @@ namespace LoadScreenGen {
                     if(Settings.authorSettings.borderSettings.includeStretch) {
                         borderOptions.Add(BorderOption.Stretch);
                     }
+                    if(borderOptions.Count == 0) {
+                        throw new ArgumentException("At least one border option must be enabled.");
+                    }
+                    if(borderOptions.Count > 1) {
+                        if(!borderOptions.Contains(Settings.authorSettings.borderSettings.defaultBorderOption)) {
+                            throw new ArgumentException("If there are multiple border options, the default border option must be set to one of them.");
+                        }
+                    }
                     HashSet<LoadingScreenPriority> loadScreenPriorities = new();
                     if(Settings.authorSettings.prioritySettings.includeStandalone) {
                         loadScreenPriorities.Add(LoadingScreenPriority.Standalone);
@@ -112,6 +159,15 @@ namespace LoadScreenGen {
                     if(Settings.authorSettings.prioritySettings.includeDebug) {
                         loadScreenPriorities.Add(LoadingScreenPriority.Debug);
                     }
+                    if(loadScreenPriorities.Count == 0) {
+                        throw new ArgumentException("At least one priority option must be enabled.");
+                    }
+                    if(loadScreenPriorities.Count > 1) {
+                        if(!loadScreenPriorities.Contains(Settings.authorSettings.prioritySettings.defaultPrioritySetting)) {
+                            throw new ArgumentException("If there are multiple priority options, the default priority option must be set to one of them.");
+                        }
+                    }
+
 
                     var aspectRatios = AspectRatio.Parse(Settings.authorSettings.aspectRatios);
                     foreach(var borderOption in borderOptions) {
@@ -157,6 +213,8 @@ namespace LoadScreenGen {
                     FomodGen.CreateFomod(imageArray, aspectRatios, borderOptions, loadScreenPriorities, frequencyList, defaultFrequency, imageResolution, targetDirectory);
 
                     //Directory.Delete(fomodTmpPath, true);
+                } else {
+                    throw new DirectoryNotFoundException("Cannot find source directory.");
                 }
             }
         }
