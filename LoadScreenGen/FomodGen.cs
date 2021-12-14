@@ -235,7 +235,7 @@ namespace LoadScreenGen {
             CopyImage("stretch.png", dest);
         }
 
-        public static void CreateFomod(Image[] imageArray, HashSet<AspectRatio> aspectRatios, HashSet<BorderOption> borderOptions, HashSet<LoadingScreenPriority> loadScreenPriorities, List<int> frequencyList, int defaultFrequency, List<int> imageResolution, List<string> textureDirectory) {
+        public static void CreateFomod(Image[] imageArray, HashSet<AspectRatio> aspectRatios, HashSet<BorderOption> borderOptions, HashSet<LoadingScreenPriority> loadScreenPriorities, List<int> frequencyList, int defaultFrequency, List<int> imageResolution, List<string> textureDirectory, string outputDirectory) {
             //Directory.GetCurrentDirectory()
             var rootDir = Program.fomodTmpPath;
             var fomodDir = Path.Combine(rootDir, "fomod");
@@ -554,6 +554,20 @@ namespace LoadScreenGen {
             }
             ZipFile.CreateFromDirectory(fomodDir, zipPathZip);
 
+            foreach(var imageRes in imageResolution) {
+                if(imageRes == 2048) { continue; }
+                zipPath7z = Program.Settings.authorSettings.modName + "_Textures" + imageRes + "_" + Program.Settings.authorSettings.modVersion + ".7z";
+                zipPathZip = Program.Settings.authorSettings.modName + "_Textures" + imageRes + "_" + Program.Settings.authorSettings.modVersion + ".zip";
+                zipPath7z = Path.Combine(rootDir, zipPath7z);
+                zipPathZip = Path.Combine(rootDir, zipPathZip);
+                if(use7z) {
+                    var cwd = Directory.GetCurrentDirectory();
+                    Directory.SetCurrentDirectory(fomodDir);
+                    TextureGen.ShellExecuteWait("7z", "a \"" + zipPath7z + "\" .\\* -mx");
+                    Directory.SetCurrentDirectory(cwd);
+                }
+                ZipFile.CreateFromDirectory(fomodDir, zipPathZip);
+            }
 
         }
     }

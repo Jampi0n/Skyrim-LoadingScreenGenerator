@@ -42,6 +42,7 @@ namespace LoadScreenGen.Settings {
         public bool enableAuthorMode = false;
 
         [SynthesisSettingName("Source Path")]
+        [SynthesisTooltip("Images from this directory are used to create the loading screens.")]
         public string sourcePath = "";
 
         [SynthesisSettingName("Include sub directories")]
@@ -85,6 +86,9 @@ namespace LoadScreenGen.Settings {
         [SynthesisSettingName("Frequency List")]
         [SynthesisTooltip("List of possible frequency choices. The first element will be the default selected item in the Fomod installer.")]
         public string frequencyList = "15,30,50,100";
+
+        [SynthesisTooltip("The Fomod installer will be created in this directory.")]
+        public string outputDirectory = "";
 
         public LoadingScreenText loadingScreenText = LoadingScreenText.Optional;
     }

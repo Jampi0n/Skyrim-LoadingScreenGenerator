@@ -10,6 +10,7 @@ namespace LoadScreenGen.Settings {
 
     public class UserSettings {
         [SynthesisSettingName("Source Path")]
+        [SynthesisTooltip("Images from this directory are used to create the loading screens.")]
         public string sourcePath = "";
 
         [SynthesisSettingName("Include sub directories")]

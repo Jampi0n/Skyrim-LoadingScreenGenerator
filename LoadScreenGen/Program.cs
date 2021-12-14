@@ -167,9 +167,13 @@ namespace LoadScreenGen {
                             throw new ArgumentException("If there are multiple priority options, the default priority option must be set to one of them.");
                         }
                     }
+                    var outputDirectory = Settings.authorSettings.outputDirectory;
+                    if(!Directory.Exists(outputDirectory)) {
+                        throw new DirectoryNotFoundException("Cannot find output directory.");
+                    }
 
 
-                    var aspectRatios = AspectRatio.Parse(Settings.authorSettings.aspectRatios);
+                        var aspectRatios = AspectRatio.Parse(Settings.authorSettings.aspectRatios);
                     foreach(var borderOption in borderOptions) {
                         foreach(var aspectRatio in aspectRatios) {
                             var displayRatio = aspectRatio.w * 1.0 / aspectRatio.h;
@@ -210,7 +214,7 @@ namespace LoadScreenGen {
                         }
                     }
                     Logger.Log(fomodTmpPath);
-                    FomodGen.CreateFomod(imageArray, aspectRatios, borderOptions, loadScreenPriorities, frequencyList, defaultFrequency, imageResolution, targetDirectory);
+                    FomodGen.CreateFomod(imageArray, aspectRatios, borderOptions, loadScreenPriorities, frequencyList, defaultFrequency, imageResolution, targetDirectory, outputDirectory);
 
                     //Directory.Delete(fomodTmpPath, true);
                 } else {
