@@ -261,7 +261,6 @@ namespace LoadScreenGen {
                     var frequency = iFrequency;
                     bool breakAfter = false;
                     if(loadScreenPriority != LoadingScreenPriority.Frequency && loadScreenPriority != LoadingScreenPriority.Mcm) {
-                        frequency = 0;
                         breakAfter = true;
                     }
                     if(loadingScreenText != LoadingScreenText.Never) {
@@ -367,7 +366,7 @@ namespace LoadScreenGen {
 
             // has multiple loading screen priorities
             if(loadScreenPriorities.Count > 1) {
-                
+
                 var chooseloadScreenPrioritiesYes = new InstallStep("Loading Screen Priority");
                 var chooseloadScreenPrioritiesNo = new InstallStep("Loading Screen Priority");
 
@@ -399,9 +398,9 @@ namespace LoadScreenGen {
 
                     var loadScreenPriorityOptionNo = new InstallOption(loadScreenPriority.ToString(), loadScreenPriority.ToDescription() + additionalDesc);
                     if(!selectFrequency) {
-                        loadScreenPriorityOptionYes.AddFolder(Path.Combine("no_messages", "" + loadScreenPriority, "" + frequencyList.First()), "");
+                        loadScreenPriorityOptionNo.AddFolder(Path.Combine("no_messages", "" + loadScreenPriority, "" + frequencyList.First()), "");
                     } else {
-                        loadScreenPriorityOptionYes.AddFlag("loadScreenPriority_" + loadScreenPriority, "true");
+                        loadScreenPriorityOptionNo.AddFlag("loadScreenPriority_" + loadScreenPriority, "true");
                     }
                     chooseloadScreenPrioritiesNo.AddOption(loadScreenPriorityOptionNo);
 
@@ -448,11 +447,11 @@ namespace LoadScreenGen {
                             }
 
                             var freqOptionYes = new InstallOption("" + frequency + '%', desc);
-                            freqOptionYes.AddFolder(Path.Combine("messages", "" + frequency), "");
+                            freqOptionYes.AddFolder(Path.Combine("messages", "" + loadScreenPriority, "" + frequency), "");
                             chooseFrequencyYes.AddOption(freqOptionYes);
 
                             var freqOptionNo = new InstallOption("" + frequency + '%', desc);
-                            freqOptionNo.AddFolder(Path.Combine("no_messages", "" + frequency), "");
+                            freqOptionNo.AddFolder(Path.Combine("no_messages", "" + loadScreenPriority, "" + frequency), "");
                             chooseFrequencyNo.AddOption(freqOptionNo);
 
                             if(frequency == defaultFrequency) {
@@ -460,7 +459,7 @@ namespace LoadScreenGen {
                                 freqOptionNo.SetDefault();
                             }
                         }
-                        
+
 
                         // add condition on the loading screen priority
                         chooseFrequencyYes.RequireFlag("loadScreenPriority_" + loadScreenPriority, "true");
@@ -505,11 +504,11 @@ namespace LoadScreenGen {
                     }
 
                     var freq_option_yes = new InstallOption("" + frequency + '%', desc);
-                    freq_option_yes.AddFolder(Path.Combine("messages", "" + frequency), "");
+                    freq_option_yes.AddFolder(Path.Combine("messages", "" + loadScreenPriorities.First(), "" + frequency), "");
                     choose_frequency_yes.AddOption(freq_option_yes);
 
                     var freq_option_no = new InstallOption("" + frequency + '%', desc);
-                    freq_option_no.AddFolder(Path.Combine("no_messages", "" + frequency), "");
+                    freq_option_no.AddFolder(Path.Combine("no_messages", "" + loadScreenPriorities.First(), "" + frequency), "");
                     choose_frequency_no.AddOption(freq_option_no);
 
                     if(frequency == defaultFrequency) {

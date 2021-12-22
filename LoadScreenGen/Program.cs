@@ -224,7 +224,7 @@ namespace LoadScreenGen {
                         if((loadScreenPriority == LoadingScreenPriority.Frequency) || (loadScreenPriority == LoadingScreenPriority.Mcm)) {
                             newFrequencyList.AddRange(frequencyList);
                         } else {
-                            newFrequencyList.Add(0);
+                            newFrequencyList.Add(frequencyList.First());
                         }
                         foreach(var frequency in newFrequencyList) {
                             if(Settings.authorSettings.loadingScreenText != LoadingScreenText.Never) {
