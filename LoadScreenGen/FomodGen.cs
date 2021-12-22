@@ -542,8 +542,10 @@ namespace LoadScreenGen {
                 }
             } catch(Exception) { }
 
-            var zipPath7z = Program.Settings.authorSettings.modName + "_" + Program.Settings.authorSettings.modVersion + ".7z";
-            var zipPathZip = Program.Settings.authorSettings.modName + "_" + Program.Settings.authorSettings.modVersion + ".zip";
+            var archiveName = Program.Settings.authorSettings.modName + "_" + Program.Settings.authorSettings.modVersion;
+
+            var zipPath7z = archiveName + ".7z";
+            var zipPathZip = archiveName + ".zip";
             zipPath7z = Path.Combine(rootDir, zipPath7z);
             zipPathZip = Path.Combine(rootDir, zipPathZip);
             if(use7z) {
@@ -551,22 +553,30 @@ namespace LoadScreenGen {
                 Directory.SetCurrentDirectory(fomodDir);
                 TextureGen.ShellExecuteWait("7z", "a \"" + zipPath7z + "\" .\\* -mx");
                 Directory.SetCurrentDirectory(cwd);
+                File.Move(zipPath7z, Path.Combine(Program.Settings.authorSettings.outputDirectory, archiveName + ".7z"));
+            } else {
+                ZipFile.CreateFromDirectory(fomodDir, zipPathZip);
+                File.Move(zipPath7z, Path.Combine(Program.Settings.authorSettings.outputDirectory, archiveName + ".zip"));
             }
-            ZipFile.CreateFromDirectory(fomodDir, zipPathZip);
 
             foreach(var imageRes in imageResolution) {
                 if(imageRes == 2048) { continue; }
-                zipPath7z = Program.Settings.authorSettings.modName + "_Textures" + imageRes + "_" + Program.Settings.authorSettings.modVersion + ".7z";
-                zipPathZip = Program.Settings.authorSettings.modName + "_Textures" + imageRes + "_" + Program.Settings.authorSettings.modVersion + ".zip";
+                var textureResolutionDir = Path.Combine(rootDir, "textures", (imageRes / 1024) + "K");
+                archiveName = Program.Settings.authorSettings.modName + "_Textures" + imageRes + "_" + Program.Settings.authorSettings.modVersion;
+                zipPath7z = archiveName + ".7z";
+                zipPathZip = archiveName + ".zip";
                 zipPath7z = Path.Combine(rootDir, zipPath7z);
                 zipPathZip = Path.Combine(rootDir, zipPathZip);
                 if(use7z) {
                     var cwd = Directory.GetCurrentDirectory();
-                    Directory.SetCurrentDirectory(fomodDir);
+                    Directory.SetCurrentDirectory(textureResolutionDir);
                     TextureGen.ShellExecuteWait("7z", "a \"" + zipPath7z + "\" .\\* -mx");
-                    Directory.SetCurrentDirectory(cwd);
+                    Directory.SetCurrentDirectory(textureResolutionDir);
+                    File.Move(zipPath7z, Path.Combine(Program.Settings.authorSettings.outputDirectory, archiveName + ".7z"));
+                } else {
+                    ZipFile.CreateFromDirectory(fomodDir, zipPathZip);
+                    File.Move(zipPath7z, Path.Combine(Program.Settings.authorSettings.outputDirectory, archiveName + ".zip"));
                 }
-                ZipFile.CreateFromDirectory(fomodDir, zipPathZip);
             }
 
         }
