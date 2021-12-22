@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using System.IO;
 using System.Text.RegularExpressions;
 using LoadScreenGen.Settings;
+using System.Diagnostics;
 
 namespace LoadScreenGen {
     public class Program {
@@ -66,13 +67,23 @@ namespace LoadScreenGen {
                         }
                     }
 
+                    var stopWatch = Stopwatch.StartNew();
                     var imageArray = TextureGen.ProcessTextures(Settings.userSettings.sourcePath, new string[] { Path.Combine(state.DataFolderPath, "textures", Settings.userSettings.defaultModFolder) }, new int[] { Settings.userSettings.imageResolution }, Settings.userSettings.includeSubDirs);
+                    stopWatch.Stop();
+                    Logger.LogTime("Texture generation", stopWatch.Elapsed);
 
+                    stopWatch.Restart();
                     string meshDirectory = Path.Combine(state.DataFolderPath, "meshes", Settings.userSettings.defaultModFolder);
                     string textureDirectory = Path.Combine("textures", Settings.userSettings.defaultModFolder);
                     Directory.CreateDirectory(meshDirectory);
                     MeshGen.CreateMeshes(imageArray.ToList(), meshDirectory, textureDirectory, templatePath, Settings.userSettings.screenWidth * 1.0 / Settings.userSettings.screenHeight, Settings.userSettings.borderOption);
+                    stopWatch.Stop();
+                    Logger.LogTime("Mesh generation", stopWatch.Elapsed);
+
+                    stopWatch.Restart();
                     PluginGen.CreateEsp(state.PatchMod, imageArray, Settings.userSettings.defaultModFolder, Settings.userSettings.defaultPrefix, true, Settings.userSettings.frequency, Settings.userSettings.loadScreenPriority);
+                    stopWatch.Stop();
+                    Logger.LogTime("Plugin generation took: ", stopWatch.Elapsed);
                 } else {
                     throw new DirectoryNotFoundException("Cannot find source directory.");
                 }
@@ -98,6 +109,8 @@ namespace LoadScreenGen {
                         throw new ArgumentException("The mod folder is not a valid file name.");
                     }
 
+                    var stopWatch = Stopwatch.StartNew();
+
                     fomodTmpPath = Path.Combine(Path.GetTempPath(), "JLoadScreens");
                     Directory.CreateDirectory(fomodTmpPath);
                     Directory.Delete(fomodTmpPath, true);
@@ -119,6 +132,11 @@ namespace LoadScreenGen {
 
                     string textureDirectory = Path.Combine("textures", Settings.authorSettings.modFolder);
                     var imageArray = TextureGen.ProcessTextures(Settings.authorSettings.sourcePath, targetDirectory.ToArray(), imageResolution.ToArray(), Settings.authorSettings.includeSubDirs);
+                    stopWatch.Stop();
+                    Logger.LogTime("Texture generation", stopWatch.Elapsed);
+
+                    stopWatch.Restart();
+
                     HashSet<BorderOption> borderOptions = new();
                     if(Settings.authorSettings.borderSettings.includeNormal) {
                         borderOptions.Add(BorderOption.Normal);
@@ -173,7 +191,7 @@ namespace LoadScreenGen {
                     }
 
 
-                        var aspectRatios = AspectRatio.Parse(Settings.authorSettings.aspectRatios);
+                    var aspectRatios = AspectRatio.Parse(Settings.authorSettings.aspectRatios);
                     foreach(var borderOption in borderOptions) {
                         foreach(var aspectRatio in aspectRatios) {
                             var displayRatio = aspectRatio.w * 1.0 / aspectRatio.h;
@@ -182,10 +200,14 @@ namespace LoadScreenGen {
                             meshDirectory = Path.Combine(meshDirectory, "" + borderOption);
                             meshDirectory = Path.Combine(meshDirectory, "meshes", Settings.authorSettings.modFolder);
                             Directory.CreateDirectory(meshDirectory);
-                            Logger.Log(meshDirectory);
                             MeshGen.CreateMeshes(imageArray.ToList(), meshDirectory, textureDirectory, templatePath, displayRatio, borderOption);
                         }
                     }
+
+                    stopWatch.Stop();
+                    Logger.LogTime("Mesh generation", stopWatch.Elapsed);
+
+                    stopWatch.Restart();
                     List<int> frequencyList = new();
                     int defaultFrequency;
                     var frequencyArray = Settings.authorSettings.frequencyList.Split(",");
@@ -213,10 +235,14 @@ namespace LoadScreenGen {
                             }
                         }
                     }
-                    Logger.Log(fomodTmpPath);
-                    FomodGen.CreateFomod(imageArray, aspectRatios, borderOptions, loadScreenPriorities, frequencyList, defaultFrequency, imageResolution, targetDirectory, outputDirectory);
+                    stopWatch.Stop();
+                    Logger.LogTime("Plugin generation", stopWatch.Elapsed);
 
+                    stopWatch.Restart();
+                    FomodGen.CreateFomod(imageArray, aspectRatios, borderOptions, loadScreenPriorities, frequencyList, defaultFrequency, imageResolution, targetDirectory, outputDirectory);
                     Directory.Delete(fomodTmpPath, true);
+                    stopWatch.Stop();
+                    Logger.LogTime("Fomod generation", stopWatch.Elapsed);
                 } else {
                     throw new DirectoryNotFoundException("Cannot find source directory.");
                 }

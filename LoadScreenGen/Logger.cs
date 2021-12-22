@@ -12,5 +12,9 @@ namespace LoadScreenGen {
             Debug.WriteLine(s);
             Console.WriteLine(s);
         }
+
+        public static void LogTime(string s, TimeSpan time) {
+            Log(s + " took: " + ((int)(time.TotalSeconds * 10)) / 10.0 + "s");
+        }
     }
 }

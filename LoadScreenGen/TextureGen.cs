@@ -66,7 +66,10 @@ namespace LoadScreenGen {
         /// <param name="imageResolution">Array of image resolutions in pixels (e.g. 2048). Textures for the i-th image resolution will be created in the i-th target directory.</param>
         /// <returns>Array of images found.</returns>
         public static Image[] ProcessTextures(string sourceDirectory, string[] targetDirectory, int[] imageResolution, bool includeSubDirs) {
+            var stopWatch = Stopwatch.StartNew();
             var imageList = new List<string>();
+            TimeSpan imageParseTime = TimeSpan.Zero;
+            var textureGenerationTimes = new TimeSpan[imageResolution.Length];
             SearchOption searchOption = includeSubDirs ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly;
             // Add all image files to a list.
             Logger.Log("Scanning source directory for valid source images...\n");
@@ -96,7 +99,7 @@ namespace LoadScreenGen {
                 string s = Path.GetFileNameWithoutExtension(image.path);
                 Logger.Log("	" + (i + 1) + "/" + imageCount + ": " + s);
                 if(!uniquePaths.Contains(s)) {
-
+                    stopWatch.Restart();
                     uniquePaths.Add(s);
 
                     bool srgb;
@@ -116,15 +119,23 @@ namespace LoadScreenGen {
                     if(srgb) {
                         srgbCmd = "-srgb ";
                     }
+                    stopWatch.Stop();
+                    imageParseTime = imageParseTime.Add(stopWatch.Elapsed);
                     for(int j = 0; j < numResolutions; ++j) {
+                        stopWatch.Restart();
                         int resolution = imageResolution[j];
                         // Execute texconv.exe (timeout = 10 seconds)
                         Directory.CreateDirectory(targetDirectory[j]);
                         string args = "-f BC1_UNORM " + srgbCmd + "-o \"" + targetDirectory[j] + "\" -y -w " + resolution + " -h " + resolution + " \"" + image.path + "\"";
                         ShellExecuteWait(Path.Combine(Program.resourceDirectory, "DirectXTex", "texconv.exe"), args);
+                        stopWatch.Stop();
+                        textureGenerationTimes[j] = textureGenerationTimes[j].Add(stopWatch.Elapsed);
                     }
                 }
-
+            }
+            Logger.LogTime("[Texture] image parsing", imageParseTime);
+            for(int j = 0; j < numResolutions; ++j) {
+                Logger.LogTime("[Texture] " + imageResolution[j], + textureGenerationTimes[j]);
             }
             return imageArray;
         }
