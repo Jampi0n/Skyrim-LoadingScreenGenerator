@@ -216,7 +216,7 @@ namespace LoadScreenGen {
                     Logger.Log(fomodTmpPath);
                     FomodGen.CreateFomod(imageArray, aspectRatios, borderOptions, loadScreenPriorities, frequencyList, defaultFrequency, imageResolution, targetDirectory, outputDirectory);
 
-                    //Directory.Delete(fomodTmpPath, true);
+                    Directory.Delete(fomodTmpPath, true);
                 } else {
                     throw new DirectoryNotFoundException("Cannot find source directory.");
                 }
