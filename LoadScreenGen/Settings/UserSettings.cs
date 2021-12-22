@@ -28,7 +28,7 @@ namespace LoadScreenGen.Settings {
         [SynthesisTooltip("The image resolution of the loading screen texture. It should be larger than your screen resolution.")]
         public int imageResolution = 2048;
 
-        [SynthesisSettingName("Loading Screen Choice")]
+        [SynthesisSettingName("Loading Screen Priority")]
         [SynthesisTooltip("Determines when the loading screens will be used.\n" + Enums.loadingScreenPriorityCombined)]
         public LoadingScreenPriority loadScreenPriority = LoadingScreenPriority.Mcm;
 
