@@ -38,7 +38,7 @@ namespace LoadScreenGen {
         }
 
         public void AddImage(string path) {
-            image = Path.Combine("fomod", path);
+            image = Path.Combine("fomod", "images", path);
         }
 
         public void SetDefault() {
@@ -229,11 +229,11 @@ namespace LoadScreenGen {
 
         static void CopyImages(string dest) {
             Directory.CreateDirectory(dest);
-            CopyImage("black.png", dest);
-            CopyImage("crop.png", dest);
-            CopyImage("fullheight.png", dest);
-            CopyImage("fullwidth.png", dest);
-            CopyImage("stretch.png", dest);
+            CopyImage("Normal.png", dest);
+            CopyImage("Crop.png", dest);
+            CopyImage("FixedHeight.png", dest);
+            CopyImage("FixedWidth.png", dest);
+            CopyImage("Stretch.png", dest);
         }
 
         public static void CreateFomod(HashSet<AspectRatio> aspectRatios, HashSet<BorderOption> borderOptions, HashSet<LoadingScreenPriority> loadScreenPriorities, HashSet<SkyrimRelease> skyrimReleases, List<int> frequencyList, int defaultFrequency, List<int> imageResolution, AspectRatio defaultAspectRatio) {
@@ -263,14 +263,14 @@ namespace LoadScreenGen {
 
             foreach(var release in skyrimReleases) {
                 File.WriteAllLines(Path.Combine(fomodSubDir, "info.xml"), new string[] {
-                "<fomod>",
-                "   <Name>" + Program.Settings.authorSettings.ModName + "</Name>",
-                "   <Author>" + Program.Settings.authorSettings.ModAuthor + "</Author>",
-                "   <Version>" + Program.Settings.authorSettings.ModVersion + "</Version>",
-                "   <Website>" + (release ==SkyrimRelease.SkyrimLE ? Program.Settings.authorSettings.ModLinkLE  : Program.Settings.authorSettings.ModLinkSE) + "</Website>",
-                "   <Description>" + Program.Settings.authorSettings.ModDescription + "</Description>",
-                "</fomod>"
-            });
+                    "<fomod>",
+                    "   <Name>" + Program.Settings.authorSettings.ModName + "</Name>",
+                    "   <Author>" + Program.Settings.authorSettings.ModAuthor + "</Author>",
+                    "   <Version>" + Program.Settings.authorSettings.ModVersion + "</Version>",
+                    "   <Website>" + (release ==SkyrimRelease.SkyrimLE ? Program.Settings.authorSettings.ModLinkLE  : Program.Settings.authorSettings.ModLinkSE) + "</Website>",
+                    "   <Description>" + Program.Settings.authorSettings.ModDescription + "</Description>",
+                    "</fomod>"
+                });
 
 
                 stopWatch.Restart();
@@ -292,6 +292,7 @@ namespace LoadScreenGen {
                             foreach(var borderOption in borderOptions) {
                                 var borderInstallOption = new InstallOption(borderOption.ToString(), borderOption.ToDescription());
                                 borderInstallOption.AddFolder(Path.Combine("" + release, "meshes", aspectRatio.ToString(), borderOption.ToString()), "");
+                                borderInstallOption.AddImage(borderOption + ".png");
                                 if(Program.Settings.authorSettings.borderSettings.defaultBorderOption == borderOption) {
                                     borderInstallOption.SetDefault();
                                 }
@@ -312,6 +313,7 @@ namespace LoadScreenGen {
                         var chooseBorderOption = new InstallStep("Border Options");
                         foreach(var borderOption in borderOptions) {
                             var borderInstallOption = new InstallOption(borderOption.ToString(), borderOption.ToDescription());
+                            borderInstallOption.AddImage(borderOption + ".png");
                             borderInstallOption.AddFolder(Path.Combine("" + release, "meshes", aspectRatios.First().ToString(), borderOption.ToString()), "");
                             if(Program.Settings.authorSettings.borderSettings.defaultBorderOption == borderOption) {
                                 borderInstallOption.SetDefault();
