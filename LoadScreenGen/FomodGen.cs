@@ -7,6 +7,7 @@ using System.IO;
 using LoadScreenGen.Settings;
 using System.IO.Compression;
 using System.Diagnostics;
+using Mutagen.Bethesda.Skyrim;
 
 namespace LoadScreenGen {
 
@@ -235,7 +236,7 @@ namespace LoadScreenGen {
             CopyImage("stretch.png", dest);
         }
 
-        public static void CreateFomod(HashSet<AspectRatio> aspectRatios, HashSet<BorderOption> borderOptions, HashSet<LoadingScreenPriority> loadScreenPriorities, List<int> frequencyList, int defaultFrequency, List<int> imageResolution, AspectRatio defaultAspectRatio) {
+        public static void CreateFomod(HashSet<AspectRatio> aspectRatios, HashSet<BorderOption> borderOptions, HashSet<LoadingScreenPriority> loadScreenPriorities, HashSet<SkyrimRelease> skyrimReleases, List<int> frequencyList, int defaultFrequency, List<int> imageResolution, AspectRatio defaultAspectRatio) {
             //Directory.GetCurrentDirectory()
 
             var stopWatch = Stopwatch.StartNew();
@@ -249,32 +250,34 @@ namespace LoadScreenGen {
                 CopyScripts(Path.Combine(fomodDir, "main", "scripts"));
             }
             var loadingScreenText = Program.Settings.authorSettings.loadingScreenText;
-            var messagesDir = Path.Combine(fomodDir, "messages");
-            var noMessagesDir = Path.Combine(fomodDir, "no_messages");
             var fomodSubDir = Path.Combine(fomodDir, "fomod");
             Directory.Move(Path.Combine(rootDir, "textures", "2K", "textures"), Path.Combine(mainDir, "textures"));
-            Directory.Move(Path.Combine(rootDir, "meshes"), Path.Combine(fomodDir, "meshes"));
             CopyImages(Path.Combine(fomodSubDir, "images"));
-
-            foreach(var loadScreenPriority in loadScreenPriorities) {
-                foreach(var iFrequency in frequencyList) {
-                    var frequency = iFrequency;
-                    bool breakAfter = false;
-                    if(loadScreenPriority != LoadingScreenPriority.Frequency && loadScreenPriority != LoadingScreenPriority.Mcm) {
-                        breakAfter = true;
-                    }
-                    if(loadingScreenText != LoadingScreenText.Never) {
-                        var dir = Path.Combine(messagesDir, "" + loadScreenPriority, "" + frequency);
-                        Directory.CreateDirectory(dir);
-                        File.Move(Path.Combine(rootDir, Program.GetPluginName(frequency, true, loadScreenPriority)), Path.Combine(dir, Program.Settings.authorSettings.PluginName));
-                    }
-                    if(loadingScreenText != LoadingScreenText.Always) {
-                        var dir = Path.Combine(noMessagesDir, "" + loadScreenPriority, "" + frequency);
-                        Directory.CreateDirectory(dir);
-                        File.Move(Path.Combine(rootDir, Program.GetPluginName(frequency, false, loadScreenPriority)), Path.Combine(dir, Program.Settings.authorSettings.PluginName));
-                    }
-                    if(breakAfter) {
-                        break;
+            foreach(var release in skyrimReleases) {
+                Directory.CreateDirectory(Path.Combine(fomodDir, "" + release));
+                Directory.Move(Path.Combine(rootDir, "" + release, "meshes"), Path.Combine(fomodDir, "" + release, "meshes"));
+                var messagesDir = Path.Combine(fomodDir, "" + release, "messages");
+                var noMessagesDir = Path.Combine(fomodDir, "" + release, "no_messages");
+                foreach(var loadScreenPriority in loadScreenPriorities) {
+                    foreach(var iFrequency in frequencyList) {
+                        var frequency = iFrequency;
+                        bool breakAfter = false;
+                        if(loadScreenPriority != LoadingScreenPriority.Frequency && loadScreenPriority != LoadingScreenPriority.Mcm) {
+                            breakAfter = true;
+                        }
+                        if(loadingScreenText != LoadingScreenText.Never) {
+                            var dir = Path.Combine(messagesDir, "" + loadScreenPriority, "" + frequency);
+                            Directory.CreateDirectory(dir);
+                            File.Move(Path.Combine(rootDir, Program.GetPluginName(release, frequency, true, loadScreenPriority)), Path.Combine(dir, Program.Settings.authorSettings.PluginName));
+                        }
+                        if(loadingScreenText != LoadingScreenText.Always) {
+                            var dir = Path.Combine(noMessagesDir, "" + loadScreenPriority, "" + frequency);
+                            Directory.CreateDirectory(dir);
+                            File.Move(Path.Combine(rootDir, Program.GetPluginName(release, frequency, false, loadScreenPriority)), Path.Combine(dir, Program.Settings.authorSettings.PluginName));
+                        }
+                        if(breakAfter) {
+                            break;
+                        }
                     }
                 }
             }
@@ -289,295 +292,294 @@ namespace LoadScreenGen {
                 "</fomod>"
             });
 
-            var fomod = new Fomod(Program.Settings.authorSettings.ModName);
-
-            // textures
-            fomod.AddRequiredFolder("main", "");
-
-            // meshes
-            if(aspectRatios.Count > 1) {
-                var chooseAspectRatio = new InstallStep("Aspect Ratio");
-                fomod.AddInstallStep(chooseAspectRatio);
-                foreach(var aspectRatio in aspectRatios) {
-                    var ratioOption = new InstallOption("" + aspectRatio, "Use this option, if you have an aspect ratio of " + aspectRatio + ".");
-                    if(borderOptions.Count > 1) {
-                        ratioOption.AddFlag("aspect_ratio_" + aspectRatio, "true");
-                        var chooseBorderOption = new InstallStep("Border Options");
-
-                        foreach(var borderOption in borderOptions) {
-                            var borderInstallOption = new InstallOption(borderOption.ToString(), borderOption.ToDescription());
-                            borderInstallOption.AddFolder(Path.Combine("meshes", aspectRatio.ToString(), borderOption.ToString()), "");
-                            if(Program.Settings.authorSettings.borderSettings.defaultBorderOption == borderOption) {
-                                borderInstallOption.SetDefault();
-                            }
-                            chooseBorderOption.AddOption(borderInstallOption);
-                        }
-                        chooseBorderOption.RequireFlag("aspect_ratio_" + aspectRatio, "true");
-                        fomod.AddInstallStep(chooseBorderOption);
-                    } else {
-                        ratioOption.AddFolder(Path.Combine("meshes", aspectRatio.ToString(), borderOptions.First().ToString()), "");
-                    }
-                    if(aspectRatio == defaultAspectRatio) {
-                        ratioOption.SetDefault();
-                    }
-                    chooseAspectRatio.AddOption(ratioOption);
-                }
-            } else {
-                if(borderOptions.Count > 1) {
-                    var chooseBorderOption = new InstallStep("Border Options");
-                    foreach(var borderOption in borderOptions) {
-                        var borderInstallOption = new InstallOption(borderOption.ToString(), borderOption.ToDescription());
-                        borderInstallOption.AddFolder(Path.Combine("meshes", aspectRatios.First().ToString(), borderOption.ToString()), "");
-                        if(Program.Settings.authorSettings.borderSettings.defaultBorderOption == borderOption) {
-                            borderInstallOption.SetDefault();
-                        }
-                        chooseBorderOption.AddOption(borderInstallOption);
-                    }
-                } else {
-                    fomod.AddRequiredFolder(Path.Combine("meshes", aspectRatios.First().ToString(), borderOptions.First().ToString()), "");
-                }
-            }
-
-            // plugin
-            // loading screen text
-            // flag: loading_screen_messages
-            if(loadingScreenText == LoadingScreenText.Optional) {
-                var chooseMessages = new InstallStep("Display Messages");
-                var yes = new InstallOption("Yes", "Enables loading screen messages.");
-                yes.AddFlag("loading_screen_messages", "true");
-                var no = new InstallOption("No", "Disables loading screen messages.");
-                no.AddFlag("loading_screen_messages", "false");
-                chooseMessages.AddOption(yes);
-                chooseMessages.AddOption(no);
-                fomod.AddInstallStep(chooseMessages);
-                // no other plugin choices
-                if(loadScreenPriorities.Count == 1 && frequencyList.Count == 1) {
-                    yes.AddFolder(Path.Combine("messages", loadScreenPriorities.First().ToString(), frequencyList.First().ToString()), "");
-                    no.AddFolder(Path.Combine("no_messages", loadScreenPriorities.First().ToString(), frequencyList.First().ToString()), "");
-                }
-            } else if(loadingScreenText == LoadingScreenText.Always && loadScreenPriorities.Count == 1 && frequencyList.Count == 1) {
-                // no other plugin choices
-                fomod.AddRequiredFolder(Path.Combine("messages", loadScreenPriorities.First().ToString(), frequencyList.First().ToString()), "");
-            } else if(loadingScreenText == LoadingScreenText.Never && loadScreenPriorities.Count == 1 && frequencyList.Count == 1) {
-                // no other plugin choices
-                fomod.AddRequiredFolder(Path.Combine("no_messages", loadScreenPriorities.First().ToString(), frequencyList.First().ToString()), "");
-            }
-
-            // from now on create two of everything to include the previous choice of loading screen text
-            // yes = messages
-            // no = no messages
-
-            // has multiple loading screen priorities
-            if(loadScreenPriorities.Count > 1) {
-
-                var chooseloadScreenPrioritiesYes = new InstallStep("Loading Screen Priority");
-                var chooseloadScreenPrioritiesNo = new InstallStep("Loading Screen Priority");
-
-                // loop all available priorities
-                foreach(var loadScreenPriority in loadScreenPriorities) {
-                    var additionalDesc = "";
-                    // whether there will be an option to select the frequency in the following page
-                    bool selectFrequency = (loadScreenPriority == LoadingScreenPriority.Frequency || loadScreenPriority == LoadingScreenPriority.Mcm) && frequencyList.Count > 1;
-                    if(selectFrequency) {
-                        if(loadScreenPriority == LoadingScreenPriority.Frequency) {
-                            additionalDesc = " The frequency can be configured on the next page.";
-                        }
-                    } else {
-                        if(loadScreenPriority == LoadingScreenPriority.Frequency) {
-                            additionalDesc = " The frequency is " + frequencyList.First() + "%.";
-                        }
-                    }
-
-                    // if frequency is not configurable, there are no additional plugin choices
-                    // otherwise use flag "loadScreenPriority_" + loadScreenPriority to store the priority choice
-
-                    var loadScreenPriorityOptionYes = new InstallOption(loadScreenPriority.ToString(), loadScreenPriority.ToDescription() + additionalDesc);
-                    if(!selectFrequency) {
-                        loadScreenPriorityOptionYes.AddFolder(Path.Combine("messages", "" + loadScreenPriority, "" + frequencyList.First()), "");
-                    } else {
-                        loadScreenPriorityOptionYes.AddFlag("loadScreenPriority_" + loadScreenPriority, "true");
-                    }
-                    chooseloadScreenPrioritiesYes.AddOption(loadScreenPriorityOptionYes);
-
-                    var loadScreenPriorityOptionNo = new InstallOption(loadScreenPriority.ToString(), loadScreenPriority.ToDescription() + additionalDesc);
-                    if(!selectFrequency) {
-                        loadScreenPriorityOptionNo.AddFolder(Path.Combine("no_messages", "" + loadScreenPriority, "" + frequencyList.First()), "");
-                    } else {
-                        loadScreenPriorityOptionNo.AddFlag("loadScreenPriority_" + loadScreenPriority, "true");
-                    }
-                    chooseloadScreenPrioritiesNo.AddOption(loadScreenPriorityOptionNo);
-
-                    // set the priority default
-                    // again twice for messages and no messages
-                    if(loadScreenPriority == Program.Settings.authorSettings.prioritySettings.defaultPrioritySetting) {
-                        loadScreenPriorityOptionYes.SetDefault();
-                        loadScreenPriorityOptionNo.SetDefault();
-                    }
-                }
-
-                // now the existing two steps for messages and no messages are added
-
-                // if messages are optional, the two steps are both added and conditionally selected based on the flag
-                if(loadingScreenText == LoadingScreenText.Optional) {
-                    chooseloadScreenPrioritiesYes.RequireFlag("loading_screen_messages", "true");
-                    chooseloadScreenPrioritiesNo.RequireFlag("loading_screen_messages", "false");
-                    fomod.AddInstallStep(chooseloadScreenPrioritiesYes);
-                    fomod.AddInstallStep(chooseloadScreenPrioritiesNo);
-                }
-                // if messages are fixed, the corresponding step is added
-                if(loadingScreenText == LoadingScreenText.Always) {
-                    fomod.AddInstallStep(chooseloadScreenPrioritiesYes);
-                }
-                if(loadingScreenText == LoadingScreenText.Never) {
-                    fomod.AddInstallStep(chooseloadScreenPrioritiesNo);
-                }
-
-                // now the frequency choice is added
-                if(frequencyList.Count > 1) {
-                    // only consider Frequency and Mcm
-                    var validOptions = new HashSet<LoadingScreenPriority>() { LoadingScreenPriority.Frequency, LoadingScreenPriority.Mcm };
-                    validOptions.IntersectWith(loadScreenPriorities);
-                    foreach(var loadScreenPriority in validOptions) {
-                        // do everything for messages and no messages and also for all loading screen priorities
-                        var chooseFrequencyYes = new InstallStep("Loading Screen Frequency");
-                        var chooseFrequencyNo = new InstallStep("Loading Screen Frequency");
-
-
-                        foreach(var frequency in frequencyList) {
-                            var desc = "Controls how often the loading screens appear. With a frequency of 100%, loading screens from vanilla and vanilla compatible loading screen mods will no longer be used.";
-                            if(loadScreenPriority == LoadingScreenPriority.Mcm) {
-                                desc += " This is only the default frequency. It can also be configured in the Mod Configuration Menu";
-                            }
-
-                            var freqOptionYes = new InstallOption("" + frequency + '%', desc);
-                            freqOptionYes.AddFolder(Path.Combine("messages", "" + loadScreenPriority, "" + frequency), "");
-                            chooseFrequencyYes.AddOption(freqOptionYes);
-
-                            var freqOptionNo = new InstallOption("" + frequency + '%', desc);
-                            freqOptionNo.AddFolder(Path.Combine("no_messages", "" + loadScreenPriority, "" + frequency), "");
-                            chooseFrequencyNo.AddOption(freqOptionNo);
-
-                            if(frequency == defaultFrequency) {
-                                freqOptionYes.SetDefault();
-                                freqOptionNo.SetDefault();
-                            }
-                        }
-
-
-                        // add condition on the loading screen priority
-                        chooseFrequencyYes.RequireFlag("loadScreenPriority_" + loadScreenPriority, "true");
-                        chooseFrequencyNo.RequireFlag("loadScreenPriority_" + loadScreenPriority, "true");
-                        // the existing two steps for messages and no messages are added
-                        // if messages are optional, the two steps are both added and conditionally selected based on the flag
-                        if(loadingScreenText == LoadingScreenText.Optional) {
-                            chooseFrequencyYes.RequireFlag("loading_screen_messages", "true");
-                            chooseFrequencyNo.RequireFlag("loading_screen_messages", "false");
-                            fomod.AddInstallStep(chooseFrequencyYes);
-                            fomod.AddInstallStep(chooseFrequencyNo);
-                        }
-                        // if messages are fixed, the corresponding step is added
-                        if(loadingScreenText == LoadingScreenText.Always) {
-                            fomod.AddInstallStep(chooseFrequencyYes);
-                        }
-                        if(loadingScreenText == LoadingScreenText.Never) {
-                            fomod.AddInstallStep(chooseFrequencyNo);
-                        }
-                    }
-                }
-            }
-            // so far we considered:
-            // no priority + no frequency choices
-            // priority choices + (no) frequency choices
-            // so only one left is:
-            // no priority choices + frequency choices
-
-            // this is almost the same as before
-            // the only difference is that loadScreenPriorities.First() is used, since there is only one choice
-            if(loadScreenPriorities.Count == 1 && frequencyList.Count > 1) {
-                var validOptions = new HashSet<LoadingScreenPriority>() { LoadingScreenPriority.Frequency, LoadingScreenPriority.Mcm };
-                validOptions.IntersectWith(loadScreenPriorities);
-                var choose_frequency_yes = new InstallStep("Loading Screen Frequency");
-                var choose_frequency_no = new InstallStep("Loading Screen Frequency");
-
-
-                foreach(var frequency in frequencyList) {
-                    var desc = "Controls how often the loading screens appear. With a frequency of 100%, loading screens from vanilla and vanilla compatible loading screen mods will no longer be used.";
-                    if(loadScreenPriorities.First() == LoadingScreenPriority.Mcm) {
-                        desc += " This is only the default frequency. It can be configured in the Mod Configuration Menu";
-                    }
-
-                    var freq_option_yes = new InstallOption("" + frequency + '%', desc);
-                    freq_option_yes.AddFolder(Path.Combine("messages", "" + loadScreenPriorities.First(), "" + frequency), "");
-                    choose_frequency_yes.AddOption(freq_option_yes);
-
-                    var freq_option_no = new InstallOption("" + frequency + '%', desc);
-                    freq_option_no.AddFolder(Path.Combine("no_messages", "" + loadScreenPriorities.First(), "" + frequency), "");
-                    choose_frequency_no.AddOption(freq_option_no);
-
-                    if(frequency == defaultFrequency) {
-                        freq_option_yes.SetDefault();
-                        freq_option_no.SetDefault();
-                    }
-                }
-                if(loadingScreenText == LoadingScreenText.Optional) {
-                    choose_frequency_yes.RequireFlag("loading_screen_messages", "true");
-                    choose_frequency_no.RequireFlag("loading_screen_messages", "false");
-                    fomod.AddInstallStep(choose_frequency_yes);
-                    fomod.AddInstallStep(choose_frequency_no);
-                }
-                if(loadingScreenText == LoadingScreenText.Always) {
-                    fomod.AddInstallStep(choose_frequency_yes);
-                }
-                if(loadingScreenText == LoadingScreenText.Never) {
-                    fomod.AddInstallStep(choose_frequency_no);
-                }
-
-            }
-
-
-            fomod.WriteFile();
-            fomod.Save(Path.Combine(fomodSubDir, "ModuleConfig.xml"));
-
-
             bool use7z = false;
-
             try {
                 if(TextureGen.ShellExecuteWait("7z", "i").Contains("7z")) {
                     use7z = true;
                 }
             } catch(Exception) { }
 
-            stopWatch.Stop();
-            Logger.LogTime("[Fomod] xml generation", stopWatch.Elapsed);
+            foreach(var release in skyrimReleases) {
+                var fomod = new Fomod(Program.Settings.authorSettings.ModName);
 
-            stopWatch.Restart();
-            var archiveName = Program.Settings.authorSettings.ModName + "_" + Program.Settings.authorSettings.ModVersion;
+                // textures
+                fomod.AddRequiredFolder("main", "");
 
-            var zipPath7z = archiveName + ".7z";
-            var zipPathZip = archiveName + ".zip";
-            zipPath7z = Path.Combine(rootDir, zipPath7z);
-            zipPathZip = Path.Combine(rootDir, zipPathZip);
-            if(use7z) {
-                var cwd = Directory.GetCurrentDirectory();
-                Directory.SetCurrentDirectory(fomodDir);
-                TextureGen.ShellExecuteWait("7z", "a \"" + zipPath7z + "\" .\\* -mx");
-                Directory.SetCurrentDirectory(cwd);
-                File.Move(zipPath7z, Path.Combine(Program.Settings.authorSettings.OutputDirectory, archiveName + ".7z"), true);
-            } else {
-                ZipFile.CreateFromDirectory(fomodDir, zipPathZip);
-                File.Move(zipPath7z, Path.Combine(Program.Settings.authorSettings.OutputDirectory, archiveName + ".zip"), true);
+                // meshes
+                if(aspectRatios.Count > 1) {
+                    var chooseAspectRatio = new InstallStep("Aspect Ratio");
+                    fomod.AddInstallStep(chooseAspectRatio);
+                    foreach(var aspectRatio in aspectRatios) {
+                        var ratioOption = new InstallOption("" + aspectRatio, "Use this option, if you have an aspect ratio of " + aspectRatio + ".");
+                        if(borderOptions.Count > 1) {
+                            ratioOption.AddFlag("aspect_ratio_" + aspectRatio, "true");
+                            var chooseBorderOption = new InstallStep("Border Options");
+
+                            foreach(var borderOption in borderOptions) {
+                                var borderInstallOption = new InstallOption(borderOption.ToString(), borderOption.ToDescription());
+                                borderInstallOption.AddFolder(Path.Combine("" + release, "meshes", aspectRatio.ToString(), borderOption.ToString()), "");
+                                if(Program.Settings.authorSettings.borderSettings.defaultBorderOption == borderOption) {
+                                    borderInstallOption.SetDefault();
+                                }
+                                chooseBorderOption.AddOption(borderInstallOption);
+                            }
+                            chooseBorderOption.RequireFlag("aspect_ratio_" + aspectRatio, "true");
+                            fomod.AddInstallStep(chooseBorderOption);
+                        } else {
+                            ratioOption.AddFolder(Path.Combine("" + release, "meshes", aspectRatio.ToString(), borderOptions.First().ToString()), "");
+                        }
+                        if(aspectRatio == defaultAspectRatio) {
+                            ratioOption.SetDefault();
+                        }
+                        chooseAspectRatio.AddOption(ratioOption);
+                    }
+                } else {
+                    if(borderOptions.Count > 1) {
+                        var chooseBorderOption = new InstallStep("Border Options");
+                        foreach(var borderOption in borderOptions) {
+                            var borderInstallOption = new InstallOption(borderOption.ToString(), borderOption.ToDescription());
+                            borderInstallOption.AddFolder(Path.Combine("" + release, "meshes", aspectRatios.First().ToString(), borderOption.ToString()), "");
+                            if(Program.Settings.authorSettings.borderSettings.defaultBorderOption == borderOption) {
+                                borderInstallOption.SetDefault();
+                            }
+                            chooseBorderOption.AddOption(borderInstallOption);
+                        }
+                    } else {
+                        fomod.AddRequiredFolder(Path.Combine("" + release, "meshes", aspectRatios.First().ToString(), borderOptions.First().ToString()), "");
+                    }
+                }
+
+                // plugin
+                // loading screen text
+                // flag: loading_screen_messages
+                if(loadingScreenText == LoadingScreenText.Optional) {
+                    var chooseMessages = new InstallStep("Display Messages");
+                    var yes = new InstallOption("Yes", "Enables loading screen messages.");
+                    yes.AddFlag("loading_screen_messages", "true");
+                    var no = new InstallOption("No", "Disables loading screen messages.");
+                    no.AddFlag("loading_screen_messages", "false");
+                    chooseMessages.AddOption(yes);
+                    chooseMessages.AddOption(no);
+                    fomod.AddInstallStep(chooseMessages);
+                    // no other plugin choices
+                    if(loadScreenPriorities.Count == 1 && frequencyList.Count == 1) {
+                        yes.AddFolder(Path.Combine("" + release, "messages", loadScreenPriorities.First().ToString(), frequencyList.First().ToString()), "");
+                        no.AddFolder(Path.Combine("" + release, "no_messages", loadScreenPriorities.First().ToString(), frequencyList.First().ToString()), "");
+                    }
+                } else if(loadingScreenText == LoadingScreenText.Always && loadScreenPriorities.Count == 1 && frequencyList.Count == 1) {
+                    // no other plugin choices
+                    fomod.AddRequiredFolder(Path.Combine("" + release, "messages", loadScreenPriorities.First().ToString(), frequencyList.First().ToString()), "");
+                } else if(loadingScreenText == LoadingScreenText.Never && loadScreenPriorities.Count == 1 && frequencyList.Count == 1) {
+                    // no other plugin choices
+                    fomod.AddRequiredFolder(Path.Combine("" + release, "no_messages", loadScreenPriorities.First().ToString(), frequencyList.First().ToString()), "");
+                }
+
+                // from now on create two of everything to include the previous choice of loading screen text
+                // yes = messages
+                // no = no messages
+
+                // has multiple loading screen priorities
+                if(loadScreenPriorities.Count > 1) {
+
+                    var chooseloadScreenPrioritiesYes = new InstallStep("Loading Screen Priority");
+                    var chooseloadScreenPrioritiesNo = new InstallStep("Loading Screen Priority");
+
+                    // loop all available priorities
+                    foreach(var loadScreenPriority in loadScreenPriorities) {
+                        var additionalDesc = "";
+                        // whether there will be an option to select the frequency in the following page
+                        bool selectFrequency = (loadScreenPriority == LoadingScreenPriority.Frequency || loadScreenPriority == LoadingScreenPriority.Mcm) && frequencyList.Count > 1;
+                        if(selectFrequency) {
+                            if(loadScreenPriority == LoadingScreenPriority.Frequency) {
+                                additionalDesc = " The frequency can be configured on the next page.";
+                            }
+                        } else {
+                            if(loadScreenPriority == LoadingScreenPriority.Frequency) {
+                                additionalDesc = " The frequency is " + frequencyList.First() + "%.";
+                            }
+                        }
+
+                        // if frequency is not configurable, there are no additional plugin choices
+                        // otherwise use flag "loadScreenPriority_" + loadScreenPriority to store the priority choice
+
+                        var loadScreenPriorityOptionYes = new InstallOption(loadScreenPriority.ToString(), loadScreenPriority.ToDescription() + additionalDesc);
+                        if(!selectFrequency) {
+                            loadScreenPriorityOptionYes.AddFolder(Path.Combine("" + release, "messages", "" + loadScreenPriority, "" + frequencyList.First()), "");
+                        } else {
+                            loadScreenPriorityOptionYes.AddFlag("loadScreenPriority_" + loadScreenPriority, "true");
+                        }
+                        chooseloadScreenPrioritiesYes.AddOption(loadScreenPriorityOptionYes);
+
+                        var loadScreenPriorityOptionNo = new InstallOption(loadScreenPriority.ToString(), loadScreenPriority.ToDescription() + additionalDesc);
+                        if(!selectFrequency) {
+                            loadScreenPriorityOptionNo.AddFolder(Path.Combine("" + release, "no_messages", "" + loadScreenPriority, "" + frequencyList.First()), "");
+                        } else {
+                            loadScreenPriorityOptionNo.AddFlag("loadScreenPriority_" + loadScreenPriority, "true");
+                        }
+                        chooseloadScreenPrioritiesNo.AddOption(loadScreenPriorityOptionNo);
+
+                        // set the priority default
+                        // again twice for messages and no messages
+                        if(loadScreenPriority == Program.Settings.authorSettings.prioritySettings.defaultPrioritySetting) {
+                            loadScreenPriorityOptionYes.SetDefault();
+                            loadScreenPriorityOptionNo.SetDefault();
+                        }
+                    }
+
+                    // now the existing two steps for messages and no messages are added
+
+                    // if messages are optional, the two steps are both added and conditionally selected based on the flag
+                    if(loadingScreenText == LoadingScreenText.Optional) {
+                        chooseloadScreenPrioritiesYes.RequireFlag("loading_screen_messages", "true");
+                        chooseloadScreenPrioritiesNo.RequireFlag("loading_screen_messages", "false");
+                        fomod.AddInstallStep(chooseloadScreenPrioritiesYes);
+                        fomod.AddInstallStep(chooseloadScreenPrioritiesNo);
+                    }
+                    // if messages are fixed, the corresponding step is added
+                    if(loadingScreenText == LoadingScreenText.Always) {
+                        fomod.AddInstallStep(chooseloadScreenPrioritiesYes);
+                    }
+                    if(loadingScreenText == LoadingScreenText.Never) {
+                        fomod.AddInstallStep(chooseloadScreenPrioritiesNo);
+                    }
+
+                    // now the frequency choice is added
+                    if(frequencyList.Count > 1) {
+                        // only consider Frequency and Mcm
+                        var validOptions = new HashSet<LoadingScreenPriority>() { LoadingScreenPriority.Frequency, LoadingScreenPriority.Mcm };
+                        validOptions.IntersectWith(loadScreenPriorities);
+                        foreach(var loadScreenPriority in validOptions) {
+                            // do everything for messages and no messages and also for all loading screen priorities
+                            var chooseFrequencyYes = new InstallStep("Loading Screen Frequency");
+                            var chooseFrequencyNo = new InstallStep("Loading Screen Frequency");
+
+
+                            foreach(var frequency in frequencyList) {
+                                var desc = "Controls how often the loading screens appear. With a frequency of 100%, loading screens from vanilla and vanilla compatible loading screen mods will no longer be used.";
+                                if(loadScreenPriority == LoadingScreenPriority.Mcm) {
+                                    desc += " This is only the default frequency. It can also be configured in the Mod Configuration Menu";
+                                }
+
+                                var freqOptionYes = new InstallOption("" + frequency + '%', desc);
+                                freqOptionYes.AddFolder(Path.Combine("" + release, "messages", "" + loadScreenPriority, "" + frequency), "");
+                                chooseFrequencyYes.AddOption(freqOptionYes);
+
+                                var freqOptionNo = new InstallOption("" + frequency + '%', desc);
+                                freqOptionNo.AddFolder(Path.Combine("" + release, "no_messages", "" + loadScreenPriority, "" + frequency), "");
+                                chooseFrequencyNo.AddOption(freqOptionNo);
+
+                                if(frequency == defaultFrequency) {
+                                    freqOptionYes.SetDefault();
+                                    freqOptionNo.SetDefault();
+                                }
+                            }
+
+
+                            // add condition on the loading screen priority
+                            chooseFrequencyYes.RequireFlag("loadScreenPriority_" + loadScreenPriority, "true");
+                            chooseFrequencyNo.RequireFlag("loadScreenPriority_" + loadScreenPriority, "true");
+                            // the existing two steps for messages and no messages are added
+                            // if messages are optional, the two steps are both added and conditionally selected based on the flag
+                            if(loadingScreenText == LoadingScreenText.Optional) {
+                                chooseFrequencyYes.RequireFlag("loading_screen_messages", "true");
+                                chooseFrequencyNo.RequireFlag("loading_screen_messages", "false");
+                                fomod.AddInstallStep(chooseFrequencyYes);
+                                fomod.AddInstallStep(chooseFrequencyNo);
+                            }
+                            // if messages are fixed, the corresponding step is added
+                            if(loadingScreenText == LoadingScreenText.Always) {
+                                fomod.AddInstallStep(chooseFrequencyYes);
+                            }
+                            if(loadingScreenText == LoadingScreenText.Never) {
+                                fomod.AddInstallStep(chooseFrequencyNo);
+                            }
+                        }
+                    }
+                }
+                // so far we considered:
+                // no priority + no frequency choices
+                // priority choices + (no) frequency choices
+                // so only one left is:
+                // no priority choices + frequency choices
+
+                // this is almost the same as before
+                // the only difference is that loadScreenPriorities.First() is used, since there is only one choice
+                if(loadScreenPriorities.Count == 1 && frequencyList.Count > 1) {
+                    var validOptions = new HashSet<LoadingScreenPriority>() { LoadingScreenPriority.Frequency, LoadingScreenPriority.Mcm };
+                    validOptions.IntersectWith(loadScreenPriorities);
+                    var choose_frequency_yes = new InstallStep("Loading Screen Frequency");
+                    var choose_frequency_no = new InstallStep("Loading Screen Frequency");
+
+
+                    foreach(var frequency in frequencyList) {
+                        var desc = "Controls how often the loading screens appear. With a frequency of 100%, loading screens from vanilla and vanilla compatible loading screen mods will no longer be used.";
+                        if(loadScreenPriorities.First() == LoadingScreenPriority.Mcm) {
+                            desc += " This is only the default frequency. It can be configured in the Mod Configuration Menu";
+                        }
+
+                        var freq_option_yes = new InstallOption("" + frequency + '%', desc);
+                        freq_option_yes.AddFolder(Path.Combine("" + release, "messages", "" + loadScreenPriorities.First(), "" + frequency), "");
+                        choose_frequency_yes.AddOption(freq_option_yes);
+
+                        var freq_option_no = new InstallOption("" + frequency + '%', desc);
+                        freq_option_no.AddFolder(Path.Combine("" + release, "no_messages", "" + loadScreenPriorities.First(), "" + frequency), "");
+                        choose_frequency_no.AddOption(freq_option_no);
+
+                        if(frequency == defaultFrequency) {
+                            freq_option_yes.SetDefault();
+                            freq_option_no.SetDefault();
+                        }
+                    }
+                    if(loadingScreenText == LoadingScreenText.Optional) {
+                        choose_frequency_yes.RequireFlag("loading_screen_messages", "true");
+                        choose_frequency_no.RequireFlag("loading_screen_messages", "false");
+                        fomod.AddInstallStep(choose_frequency_yes);
+                        fomod.AddInstallStep(choose_frequency_no);
+                    }
+                    if(loadingScreenText == LoadingScreenText.Always) {
+                        fomod.AddInstallStep(choose_frequency_yes);
+                    }
+                    if(loadingScreenText == LoadingScreenText.Never) {
+                        fomod.AddInstallStep(choose_frequency_no);
+                    }
+
+                }
+
+                fomod.WriteFile();
+                fomod.Save(Path.Combine(fomodSubDir, "ModuleConfig.xml"));
+
+                stopWatch.Stop();
+                Logger.LogTime("[Fomod] xml generation", stopWatch.Elapsed);
+
+                stopWatch.Restart();
+                var archiveName = Program.Settings.authorSettings.ModName + "_" + Program.Settings.authorSettings.ModVersion + "_" + release;
+
+                var zipPath7z = archiveName + ".7z";
+                var zipPathZip = archiveName + ".zip";
+                zipPath7z = Path.Combine(rootDir, zipPath7z);
+                zipPathZip = Path.Combine(rootDir, zipPathZip);
+                if(use7z) {
+                    var cwd = Directory.GetCurrentDirectory();
+                    Directory.SetCurrentDirectory(fomodDir);
+                    TextureGen.ShellExecuteWait("7z", "a \"" + zipPath7z + "\" .\\* -mx");
+                    Directory.SetCurrentDirectory(cwd);
+                    File.Move(zipPath7z, Path.Combine(Program.Settings.authorSettings.OutputDirectory, archiveName + ".7z"), true);
+                } else {
+                    ZipFile.CreateFromDirectory(fomodDir, zipPathZip);
+                    File.Move(zipPath7z, Path.Combine(Program.Settings.authorSettings.OutputDirectory, archiveName + ".zip"), true);
+                }
+
+                stopWatch.Stop();
+                Logger.LogTime("[Fomod] main archive", stopWatch.Elapsed);
             }
-
-            stopWatch.Stop();
-            Logger.LogTime("[Fomod] main archive", stopWatch.Elapsed);
 
             foreach(var imageRes in imageResolution) {
                 if(imageRes == 2048) { continue; }
                 stopWatch.Restart();
                 var textureResolutionDir = Path.Combine(rootDir, "textures", (imageRes / 1024) + "K");
-                archiveName = Program.Settings.authorSettings.ModName + "_Textures" + imageRes + "_" + Program.Settings.authorSettings.ModVersion;
-                zipPath7z = archiveName + ".7z";
-                zipPathZip = archiveName + ".zip";
+                var archiveName = Program.Settings.authorSettings.ModName + "_Textures" + imageRes + "_" + Program.Settings.authorSettings.ModVersion;
+                var zipPath7z = archiveName + ".7z";
+                var zipPathZip = archiveName + ".zip";
                 zipPath7z = Path.Combine(rootDir, zipPath7z);
                 zipPathZip = Path.Combine(rootDir, zipPathZip);
                 if(use7z) {

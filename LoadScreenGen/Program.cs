@@ -21,6 +21,8 @@ namespace LoadScreenGen {
         static Lazy<MainSettings> _Settings = null!;
         public static MainSettings Settings => _Settings.Value;
 
+        public static TargetRelease userRealease = TargetRelease.LE_Only;
+
         public static Task<int> Main(string[] args) {
             return SynthesisPipeline.Instance
                 .AddPatch<ISkyrimMod, ISkyrimModGetter>(RunPatch)
@@ -34,23 +36,19 @@ namespace LoadScreenGen {
 
         public static void RunPatch(IPatcherState<ISkyrimMod, ISkyrimModGetter> state) {
             //Your code here!
-            Program.resourceDirectory = state.InternalDataPath ?? "";
+            resourceDirectory = state.InternalDataPath ?? "";
             Program.state = state;
 
-            if(Program.resourceDirectory == "" || !Directory.Exists(Program.resourceDirectory)) {
+            if(resourceDirectory == "" || !Directory.Exists(resourceDirectory)) {
                 throw new DirectoryNotFoundException("Cannot find resource directory.");
             }
 
             var sse = state.GameRelease != GameRelease.SkyrimLE && state.GameRelease != GameRelease.EnderalLE;
-            string templatePath;
             if(sse) {
-                templatePath = Path.Combine(resourceDirectory, "TemplateSSE.nif");
+                userRealease = TargetRelease.SE_Only;
             } else {
-                templatePath = Path.Combine(resourceDirectory, "TemplateLE.nif");
+                userRealease = TargetRelease.LE_Only;
             }
-            SkyrimRelease release = sse ? SkyrimRelease.SkyrimSE : SkyrimRelease.SkyrimLE;
-
-
 
 
             if(!Settings.authorSettings.EnableAuthorMode) {
@@ -76,6 +74,12 @@ namespace LoadScreenGen {
                     string meshDirectory = Path.Combine(state.DataFolderPath, "meshes", Settings.userSettings.DefaultModFolder);
                     string textureDirectory = Path.Combine("textures", Settings.userSettings.DefaultModFolder);
                     Directory.CreateDirectory(meshDirectory);
+                    string templatePath;
+                    if(sse) {
+                        templatePath = Path.Combine(resourceDirectory, "TemplateSSE.nif");
+                    } else {
+                        templatePath = Path.Combine(resourceDirectory, "TemplateLE.nif");
+                    }
                     MeshGen.CreateMeshes(imageArray.ToList(), meshDirectory, textureDirectory, templatePath, Settings.userSettings.ScreenWidth * 1.0 / Settings.userSettings.ScreenHeight, Settings.userSettings.BorderOption);
                     stopWatch.Stop();
                     Logger.LogTime("Mesh generation", stopWatch.Elapsed);
@@ -192,15 +196,31 @@ namespace LoadScreenGen {
 
                     var defaultAspectRatio = AspectRatio.Parse(Settings.authorSettings.DefaultAspectRatio).First();
                     var aspectRatios = AspectRatio.Parse(Settings.authorSettings.AspectRatios);
+
+                    HashSet<SkyrimRelease> skyrimReleases = new();
+                    if(Settings.authorSettings.TargetRelease != TargetRelease.SE_Only) {
+                        skyrimReleases.Add(SkyrimRelease.SkyrimLE);
+                    }
+                    if(Settings.authorSettings.TargetRelease != TargetRelease.LE_Only) {
+                        skyrimReleases.Add(SkyrimRelease.SkyrimSE);
+                    }
                     foreach(var borderOption in borderOptions) {
                         foreach(var aspectRatio in aspectRatios) {
-                            var displayRatio = aspectRatio.w * 1.0 / aspectRatio.h;
-                            string meshDirectory = Path.Combine(state.DataFolderPath, fomodTmpPath, "meshes");
-                            meshDirectory = Path.Combine(meshDirectory, "" + aspectRatio);
-                            meshDirectory = Path.Combine(meshDirectory, "" + borderOption);
-                            meshDirectory = Path.Combine(meshDirectory, "meshes", Settings.authorSettings.ModFolder);
-                            Directory.CreateDirectory(meshDirectory);
-                            MeshGen.CreateMeshes(imageArray.ToList(), meshDirectory, textureDirectory, templatePath, displayRatio, borderOption);
+                            foreach(var release in skyrimReleases) {
+                                string templatePath;
+                                if(release == SkyrimRelease.SkyrimSE) {
+                                    templatePath = Path.Combine(resourceDirectory, "TemplateSSE.nif");
+                                } else {
+                                    templatePath = Path.Combine(resourceDirectory, "TemplateLE.nif");
+                                }
+                                var displayRatio = aspectRatio.w * 1.0 / aspectRatio.h;
+                                string meshDirectory = Path.Combine(state.DataFolderPath, fomodTmpPath, "" + release, "meshes");
+                                meshDirectory = Path.Combine(meshDirectory, "" + aspectRatio);
+                                meshDirectory = Path.Combine(meshDirectory, "" + borderOption);
+                                meshDirectory = Path.Combine(meshDirectory, "meshes", Settings.authorSettings.ModFolder);
+                                Directory.CreateDirectory(meshDirectory);
+                                MeshGen.CreateMeshes(imageArray.ToList(), meshDirectory, textureDirectory, templatePath, displayRatio, borderOption);
+                            }
                         }
                     }
 
@@ -228,10 +248,20 @@ namespace LoadScreenGen {
                         }
                         foreach(var frequency in newFrequencyList) {
                             if(Settings.authorSettings.loadingScreenText != LoadingScreenText.Never) {
-                                CreatePluginOptions(release, state.DataFolderPath, frequency, true, imageArray, loadScreenPriority);
+                                if(Settings.authorSettings.TargetRelease != TargetRelease.SE_Only) {
+                                    CreatePluginOptions(SkyrimRelease.SkyrimLE, state.DataFolderPath, frequency, true, imageArray, loadScreenPriority);
+                                }
+                                if(Settings.authorSettings.TargetRelease != TargetRelease.LE_Only) {
+                                    CreatePluginOptions(SkyrimRelease.SkyrimSE, state.DataFolderPath, frequency, true, imageArray, loadScreenPriority);
+                                }
                             }
                             if(Settings.authorSettings.loadingScreenText != LoadingScreenText.Always) {
-                                CreatePluginOptions(release, state.DataFolderPath, frequency, false, imageArray, loadScreenPriority);
+                                if(Settings.authorSettings.TargetRelease != TargetRelease.SE_Only) {
+                                    CreatePluginOptions(SkyrimRelease.SkyrimLE, state.DataFolderPath, frequency, false, imageArray, loadScreenPriority);
+                                }
+                                if(Settings.authorSettings.TargetRelease != TargetRelease.LE_Only) {
+                                    CreatePluginOptions(SkyrimRelease.SkyrimSE, state.DataFolderPath, frequency, false, imageArray, loadScreenPriority);
+                                }
                             }
                         }
                     }
@@ -239,7 +269,7 @@ namespace LoadScreenGen {
                     Logger.LogTime("Plugin generation", stopWatch.Elapsed);
 
                     stopWatch.Restart();
-                    FomodGen.CreateFomod(aspectRatios, borderOptions, loadScreenPriorities, frequencyList, defaultFrequency, imageResolution, defaultAspectRatio);
+                    FomodGen.CreateFomod(aspectRatios, borderOptions, loadScreenPriorities, skyrimReleases, frequencyList, defaultFrequency, imageResolution, defaultAspectRatio);
                     //Directory.Delete(fomodTmpPath, true);
                     stopWatch.Stop();
                     Logger.LogTime("Fomod generation", stopWatch.Elapsed);
@@ -248,11 +278,11 @@ namespace LoadScreenGen {
                 }
             }
         }
-        public static string GetPluginName(int frequency, bool includeText, LoadingScreenPriority loadScreenPriority) {
-            return "FOMOD_M" + (includeText ? "1" : "0") + "_C_" + loadScreenPriority + "_P" + frequency + "_FOMODEND_" + Settings.authorSettings.PluginName;
+        public static string GetPluginName(SkyrimRelease release, int frequency, bool includeText, LoadingScreenPriority loadScreenPriority) {
+            return "FOMOD_" + release + "_M" + (includeText ? "1" : "0") + "_C_" + loadScreenPriority + "_P" + frequency + "_FOMODEND_" + Settings.authorSettings.PluginName;
         }
         public static void CreatePluginOptions(SkyrimRelease release, string dataPath, int frequency, bool includeText, Image[] imageArray, LoadingScreenPriority loadScreenPriority) {
-            var pluginPath = GetPluginName(frequency, includeText, loadScreenPriority);
+            var pluginPath = GetPluginName(release, frequency, includeText, loadScreenPriority);
             pluginPath = Path.Combine(fomodTmpPath, pluginPath);
             var mod = PluginGen.CreateNewEsp(pluginPath, release, dataPath);
             PluginGen.CreateEsp(mod, imageArray, Settings.authorSettings.ModFolder, Settings.authorSettings.PluginPrefix, includeText, frequency, loadScreenPriority);

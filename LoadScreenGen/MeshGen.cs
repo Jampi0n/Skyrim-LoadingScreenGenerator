@@ -64,14 +64,9 @@ namespace LoadScreenGen {
         }
 
         public static void CreateMeshes(List<Image> imageList, string targetDirectory, string textureDirectory, string templatePath, double displayRatio, BorderOption borderOption) {
-            /*foreach(var image in imageList) {
-                var savePath = Path.Combine(targetDirectory, image.skyrimPath + ".nif.txt");
-                File.WriteAllText(savePath, "Texture=" + Path.Combine(textureDirectory, image.skyrimPath + ".dds") + "\ndisplayRatio=" + displayRatio + "\nborderOption=" + borderOption);
-            }*/
             var templateNif = new NifFile();
             templateNif.Load(templatePath);
             int i = 0;
-            int n = imageList.Count;
             foreach(var image in imageList) {
                 var imagePath = image.skyrimPath;
                 var newNif = new NifFile(templateNif);
@@ -80,29 +75,27 @@ namespace LoadScreenGen {
                 if(shape != null) {
                     newNif.SetTextureSlot(shape, Path.Combine(textureDirectory, imagePath + ".dds"));
                     FitToDisplayRatio(displayRatio, image.width * 1.0 / image.height, borderOption);
-                    var geo = shape.GetGeomData();
 
+                    var verts = newNif.GetVertsForShape(shape);
+                    
                     // Top Left
-
-                    geo.vertices[0].x = (float)(sourceOffsetX - sourceUpperWidth * widthFactor);
-                    geo.vertices[0].y = (float)(sourceOffsetY + sourceHeight * heightFactor - sourceHeightOffset * heightFactor);
+                    verts[0].x = (float)(sourceOffsetX - sourceUpperWidth * widthFactor);
+                    verts[0].y = (float)(sourceOffsetY + sourceHeight * heightFactor - sourceHeightOffset * heightFactor);
 
                     // Bottom Left
-                    geo.vertices[1].x = (float)(sourceOffsetX - sourceUpperWidth * widthFactor - sourceLowerWidth * widthFactor * heightFactor);
-                    geo.vertices[1].y = (float)(sourceOffsetY - sourceHeight * heightFactor - sourceHeightOffset * heightFactor);
+                    verts[1].x = (float)(sourceOffsetX - sourceUpperWidth * widthFactor - sourceLowerWidth * widthFactor * heightFactor);
+                    verts[1].y = (float)(sourceOffsetY - sourceHeight * heightFactor - sourceHeightOffset * heightFactor);
 
                     // Bottom Right
-                    geo.vertices[2].x = (float)(sourceOffsetX + sourceUpperWidth * widthFactor + sourceLowerWidth * widthFactor * heightFactor);
-                    geo.vertices[2].y = (float)(sourceOffsetY - sourceHeight * heightFactor - sourceHeightOffset * heightFactor);
+                    verts[2].x = (float)(sourceOffsetX + sourceUpperWidth * widthFactor + sourceLowerWidth * widthFactor * heightFactor);
+                    verts[2].y = (float)(sourceOffsetY - sourceHeight * heightFactor - sourceHeightOffset * heightFactor);
 
                     // Top Right
-                    geo.vertices[3].x = (float)(sourceOffsetX + sourceUpperWidth * widthFactor);
-                    geo.vertices[3].y = (float)(sourceOffsetY + sourceHeight * heightFactor - sourceHeightOffset * heightFactor);
+                    verts[3].x = (float)(sourceOffsetX + sourceUpperWidth * widthFactor);
+                    verts[3].y = (float)(sourceOffsetY + sourceHeight * heightFactor - sourceHeightOffset * heightFactor);
 
-                    shape.SetGeomData(geo);
-                    geo.Dispose();
+                    newNif.SetVertsForShape(shape, verts);
                 }
-
                 var savePath = Path.Combine(targetDirectory, image.skyrimPath + ".nif");
                 newNif.Save(savePath);
                 shape?.Dispose();

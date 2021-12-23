@@ -7,11 +7,7 @@ using Mutagen.Bethesda.Synthesis.Settings;
 
 namespace LoadScreenGen.Settings {
 
-    public enum LoadingScreenText {
-        Always,
-        Never,
-        Optional
-    }
+
     public class BorderSettings {
         [SynthesisTooltip("How image borders are handled for images that differ from your display aspect ratio.\n" + Enums.borderOptionNormal)]
         public bool includeNormal = true;
@@ -52,6 +48,9 @@ namespace LoadScreenGen.Settings {
     public class AuthorSettings {
         [SynthesisTooltip("Creates a FOMOD installer with many options.")]
         public bool EnableAuthorMode { set; get; } = false;
+
+        [SynthesisTooltip("For which game release to create FOMOD installers. The SE version works with AE and VR.")]
+        public TargetRelease TargetRelease { set; get; } = TargetRelease.LE_and_SE;
 
         [SynthesisSettingName("Source Path")]
         [SynthesisTooltip("Images from this directory are used to create the loading screens.")]

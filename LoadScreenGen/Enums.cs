@@ -6,6 +6,18 @@ using System.Threading.Tasks;
 
 namespace LoadScreenGen {
 
+    public enum LoadingScreenText {
+        Always,
+        Never,
+        Optional
+    }
+
+    public enum TargetRelease {
+        LE_and_SE,
+        LE_Only,
+        SE_Only,
+    }
+
     public enum BorderOption {
         Normal,
         Crop,
