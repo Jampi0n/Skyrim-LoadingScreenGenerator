@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-//using nifly;
+using nifly;
 using System.IO;
 using LoadScreenGen.Settings;
 
@@ -70,11 +70,11 @@ namespace LoadScreenGen {
         }
 
         public static void CreateMeshes(List<Image> imageList, string targetDirectory, string textureDirectory, string templatePath, double displayRatio, BorderOption borderOption) {
-            foreach(var image in imageList) {
+            /*foreach(var image in imageList) {
                 var savePath = Path.Combine(targetDirectory, image.skyrimPath + ".nif.txt");
                 File.WriteAllText(savePath, "Texture=" + Path.Combine(textureDirectory, image.skyrimPath + ".dds") + "\ndisplayRatio=" + displayRatio + "\nborderOption=" + borderOption);
-            }
-            /*var templateNif = new NifFile();
+            }*/
+            var templateNif = new NifFile();
             templateNif.Load(templatePath);
             int i = 0;
             int n = imageList.Count;
@@ -117,7 +117,7 @@ namespace LoadScreenGen {
                 newNif.Dispose();
                 i++;
             }
-            templateNif.Dispose();*/
+            templateNif.Dispose();
         }
     }
 }

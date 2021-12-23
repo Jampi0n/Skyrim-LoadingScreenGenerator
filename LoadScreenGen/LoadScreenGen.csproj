@@ -17,6 +17,7 @@
     <PackageReference Include="Mutagen.Bethesda" Version="0.34.0" />
     <PackageReference Include="Mutagen.Bethesda.FormKeys.SkyrimLE" Version="2.1.0" />
     <PackageReference Include="Mutagen.Bethesda.Synthesis" Version="0.21.2-pr001" />
+    <PackageReference Include="niflysharp" Version="1.2.8" />
     <PackageReference Include="System.Windows.Extensions" Version="6.0.0" />
   </ItemGroup>
 </Project>
