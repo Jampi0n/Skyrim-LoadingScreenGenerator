@@ -297,6 +297,14 @@ namespace LoadScreenGen {
             this.h = h;
         }
 
+        public static bool operator ==(AspectRatio a, AspectRatio b) {
+            return a.Equals(b);
+        }
+
+        public static bool operator !=(AspectRatio a, AspectRatio b) {
+            return !(a == b);
+        }
+
         public override bool Equals(object? obj) {
             if(obj is AspectRatio asAspectRatio) {
                 return asAspectRatio.w == w && asAspectRatio.h == h;
