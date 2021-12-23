@@ -1,0 +1,8 @@
+{
+  "Nickname": "Loading Screen Generator",
+  "Visibility": "Visible",
+  "OneLineDescription": "Creates a fully working loading screen mod from the images within a selected directory.",
+  "LongDescription": "",
+  "PreferredAutoVersioning": "Default",
+  "RequiredMods": []
+}
