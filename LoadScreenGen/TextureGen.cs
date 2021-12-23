@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Diagnostics;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace LoadScreenGen {
@@ -106,13 +107,15 @@ namespace LoadScreenGen {
             imageArray = uniqueImageList.ToArray();
             imageCount = imageArray.Length;
 
+            int progressCounter = 0;
+
             Parallel.For(0, imageCount, new ParallelOptions() {
                 MaxDegreeOfParallelism = 8,
             }, (i) => {
                 var image = imageArray[i];
 
                 string s = Path.GetFileNameWithoutExtension(image.path);
-                Logger.Log("	" + (i + 1) + "/" + imageCount + ": " + s);
+                Logger.Log("	" + Interlocked.Increment(ref progressCounter) + "/" + imageCount + ": " + s);
             
                 bool srgb;
                 string srgbCmd = "";
