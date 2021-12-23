@@ -25,7 +25,7 @@ namespace LoadScreenGen.Settings {
         public int ScreenHeight { set; get; } = 9;
 
         [SynthesisSettingName("Image Resolution")]
-        [SynthesisTooltip("The image resolution of the loading screen texture. It should be larger than your screen resolution.")]
+        [SynthesisTooltip("The image resolution of the loading screen texture. Allowed values: 1024, 2048, 4096, 8192. Larger textures take much longer. For best quality, pick the lowest resolution that is not smaller than your screen resolution.")]
         public int ImageResolution { set; get; } = 2048;
 
         [SynthesisSettingName("Loading Screen Priority")]

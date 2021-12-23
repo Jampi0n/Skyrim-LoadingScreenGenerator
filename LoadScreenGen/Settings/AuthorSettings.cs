@@ -39,9 +39,9 @@ namespace LoadScreenGen.Settings {
     }
 
     public class ResolutionSettings {
-        [SynthesisTooltip("Additionally creates 4K textures (2K option is always included).")]
+        [SynthesisTooltip("Additionally creates 4K textures (2K option is always included). Takes much longer.")]
         public bool fourK = true;
-        [SynthesisTooltip("Additionally creates 8K textures (2K option is always included).")]
+        [SynthesisTooltip("Additionally creates 8K textures (2K option is always included). Takes much much longer. Not recommended.")]
         public bool eightK = false;
     }
 
