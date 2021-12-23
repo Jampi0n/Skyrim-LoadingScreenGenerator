@@ -254,16 +254,6 @@ namespace LoadScreenGen {
             Directory.Move(Path.Combine(rootDir, "textures", "2K", "textures"), Path.Combine(mainDir, "textures"));
             CopyImages(Path.Combine(fomodSubDir, "images"));
 
-            File.WriteAllLines(Path.Combine(fomodSubDir, "info.xml"), new string[] {
-                "<fomod>",
-                "   <Name>" + Program.Settings.authorSettings.ModName + "</Name>",
-                "   <Author>" + Program.Settings.authorSettings.ModAuthor + "</Author>",
-                "   <Version>" + Program.Settings.authorSettings.ModVersion + "</Version>",
-                "   <Website>" + Program.Settings.authorSettings.ModLink + "</Website>",
-                "   <Description>" + Program.Settings.authorSettings.ModDescription + "</Description>",
-                "</fomod>"
-            });
-
             bool use7z = false;
             try {
                 if(TextureGen.ShellExecuteWait("7z", "i").Contains("7z")) {
@@ -272,6 +262,17 @@ namespace LoadScreenGen {
             } catch(Exception) { }
 
             foreach(var release in skyrimReleases) {
+                File.WriteAllLines(Path.Combine(fomodSubDir, "info.xml"), new string[] {
+                "<fomod>",
+                "   <Name>" + Program.Settings.authorSettings.ModName + "</Name>",
+                "   <Author>" + Program.Settings.authorSettings.ModAuthor + "</Author>",
+                "   <Version>" + Program.Settings.authorSettings.ModVersion + "</Version>",
+                "   <Website>" + (release ==SkyrimRelease.SkyrimLE ? Program.Settings.authorSettings.ModLinkLE  : Program.Settings.authorSettings.ModLinkSE) + "</Website>",
+                "   <Description>" + Program.Settings.authorSettings.ModDescription + "</Description>",
+                "</fomod>"
+            });
+
+
                 stopWatch.Restart();
                 var fomod = new Fomod(Program.Settings.authorSettings.ModName);
 

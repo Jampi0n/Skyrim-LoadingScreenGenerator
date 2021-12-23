@@ -72,7 +72,10 @@ namespace LoadScreenGen.Settings {
         public string ModAuthor { set; get; } = "Nazeem";
 
         [SynthesisTooltip("Visible in the FOMOD installer.")]
-        public string ModLink { set; get; } = "https://www.nexusmods.com/skyrimspecialedition/mods/36556";
+        public string ModLinkLE { set; get; } = "https://www.nexusmods.com/skyrimspecialedition/mods/36556";
+
+        [SynthesisTooltip("Visible in the FOMOD installer.")]
+        public string ModLinkSE { set; get; } = "https://www.nexusmods.com/skyrimspecialedition/mods/36556";
 
         [SynthesisTooltip("Visible in the plugin header.")]
         public string ModDescription { set; get; } = "Adds beautiful loading screens painted by the glorious Nazeem.";
