@@ -239,7 +239,7 @@ namespace LoadScreenGen {
         public static void CreateFomod(HashSet<AspectRatio> aspectRatios, HashSet<BorderOption> borderOptions, HashSet<LoadingScreenPriority> loadScreenPriorities, HashSet<SkyrimRelease> skyrimReleases, List<int> frequencyList, int defaultFrequency, List<int> imageResolution, AspectRatio defaultAspectRatio) {
             //Directory.GetCurrentDirectory()
 
-            var stopWatch = Stopwatch.StartNew();
+            var stopWatch = new Stopwatch();
 
             var rootDir = Program.fomodTmpPath;
             var fomodDir = Path.Combine(rootDir, "fomod");
@@ -253,34 +253,6 @@ namespace LoadScreenGen {
             var fomodSubDir = Path.Combine(fomodDir, "fomod");
             Directory.Move(Path.Combine(rootDir, "textures", "2K", "textures"), Path.Combine(mainDir, "textures"));
             CopyImages(Path.Combine(fomodSubDir, "images"));
-            foreach(var release in skyrimReleases) {
-                Directory.CreateDirectory(Path.Combine(fomodDir, "" + release));
-                Directory.Move(Path.Combine(rootDir, "" + release, "meshes"), Path.Combine(fomodDir, "" + release, "meshes"));
-                var messagesDir = Path.Combine(fomodDir, "" + release, "messages");
-                var noMessagesDir = Path.Combine(fomodDir, "" + release, "no_messages");
-                foreach(var loadScreenPriority in loadScreenPriorities) {
-                    foreach(var iFrequency in frequencyList) {
-                        var frequency = iFrequency;
-                        bool breakAfter = false;
-                        if(loadScreenPriority != LoadingScreenPriority.Frequency && loadScreenPriority != LoadingScreenPriority.Mcm) {
-                            breakAfter = true;
-                        }
-                        if(loadingScreenText != LoadingScreenText.Never) {
-                            var dir = Path.Combine(messagesDir, "" + loadScreenPriority, "" + frequency);
-                            Directory.CreateDirectory(dir);
-                            File.Move(Path.Combine(rootDir, Program.GetPluginName(release, frequency, true, loadScreenPriority)), Path.Combine(dir, Program.Settings.authorSettings.PluginName));
-                        }
-                        if(loadingScreenText != LoadingScreenText.Always) {
-                            var dir = Path.Combine(noMessagesDir, "" + loadScreenPriority, "" + frequency);
-                            Directory.CreateDirectory(dir);
-                            File.Move(Path.Combine(rootDir, Program.GetPluginName(release, frequency, false, loadScreenPriority)), Path.Combine(dir, Program.Settings.authorSettings.PluginName));
-                        }
-                        if(breakAfter) {
-                            break;
-                        }
-                    }
-                }
-            }
 
             File.WriteAllLines(Path.Combine(fomodSubDir, "info.xml"), new string[] {
                 "<fomod>",
@@ -300,6 +272,7 @@ namespace LoadScreenGen {
             } catch(Exception) { }
 
             foreach(var release in skyrimReleases) {
+                stopWatch.Restart();
                 var fomod = new Fomod(Program.Settings.authorSettings.ModName);
 
                 // textures
@@ -548,10 +521,34 @@ namespace LoadScreenGen {
                 fomod.WriteFile();
                 fomod.Save(Path.Combine(fomodSubDir, "ModuleConfig.xml"));
 
-                stopWatch.Stop();
-                Logger.LogTime("[Fomod] xml generation", stopWatch.Elapsed);
+                Directory.CreateDirectory(Path.Combine(fomodDir, "" + release));
+                Directory.Move(Path.Combine(rootDir, "" + release, "meshes"), Path.Combine(fomodDir, "" + release, "meshes"));
+                var messagesDir = Path.Combine(fomodDir, "" + release, "messages");
+                var noMessagesDir = Path.Combine(fomodDir, "" + release, "no_messages");
+                foreach(var loadScreenPriority in loadScreenPriorities) {
+                    foreach(var iFrequency in frequencyList) {
+                        var frequency = iFrequency;
+                        bool breakAfter = false;
+                        if(loadScreenPriority != LoadingScreenPriority.Frequency && loadScreenPriority != LoadingScreenPriority.Mcm) {
+                            breakAfter = true;
+                        }
+                        if(loadingScreenText != LoadingScreenText.Never) {
+                            var dir = Path.Combine(messagesDir, "" + loadScreenPriority, "" + frequency);
+                            Directory.CreateDirectory(dir);
+                            File.Move(Path.Combine(rootDir, Program.GetPluginName(release, frequency, true, loadScreenPriority)), Path.Combine(dir, Program.Settings.authorSettings.PluginName));
+                        }
+                        if(loadingScreenText != LoadingScreenText.Always) {
+                            var dir = Path.Combine(noMessagesDir, "" + loadScreenPriority, "" + frequency);
+                            Directory.CreateDirectory(dir);
+                            File.Move(Path.Combine(rootDir, Program.GetPluginName(release, frequency, false, loadScreenPriority)), Path.Combine(dir, Program.Settings.authorSettings.PluginName));
+                        }
+                        if(breakAfter) {
+                            break;
+                        }
+                    }
+                }
 
-                stopWatch.Restart();
+
                 var archiveName = Program.Settings.authorSettings.ModName + "_" + Program.Settings.authorSettings.ModVersion + "_" + release;
 
                 var zipPath7z = archiveName + ".7z";
@@ -571,6 +568,8 @@ namespace LoadScreenGen {
 
                 stopWatch.Stop();
                 Logger.LogTime("[Fomod] main archive", stopWatch.Elapsed);
+
+                Directory.Delete(Path.Combine(fomodDir, "" + release), true);
             }
 
             foreach(var imageRes in imageResolution) {
