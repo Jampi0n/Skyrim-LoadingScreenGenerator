@@ -134,7 +134,7 @@ namespace LoadScreenGen {
             quest.GetAlias().Spells.Add(cellStalkerSpell!);
 
             var script = quest.Vmad().AddLocalScript("JLS_MCM_Quest_Script");
-            script.AddStringProperty("ModName", "");
+            script.AddStringProperty("ModName", Program.Settings.authorSettings.mcmName);
             script.AddObjectProperty("FrequencyProperty", configFrequencyVar!);
         }
     }

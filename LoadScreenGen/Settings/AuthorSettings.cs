@@ -51,6 +51,9 @@ namespace LoadScreenGen.Settings {
         [SynthesisTooltip("Must be a valid file name. Part of the archive file name and visible in the FOMOD installer.")]
         public string modName = "Nazeem's Loading Screen Mod";
 
+        [SynthesisTooltip("If the MCM option is used, this will be the name of the MCM. Keep it short.")]
+        public string mcmName = "Nazeem's Loading Screen Mod";
+
         [SynthesisTooltip("Part of the archive file name and visible in the FOMOD installer.")]
         public string modVersion = "1.0.0";
 
