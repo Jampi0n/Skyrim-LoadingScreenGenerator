@@ -11,40 +11,40 @@ namespace LoadScreenGen.Settings {
     public class UserSettings {
         [SynthesisSettingName("Source Path")]
         [SynthesisTooltip("Images from this directory are used to create the loading screens.")]
-        public string sourcePath = "";
+        public string SourcePath { set; get; } = "";
 
         [SynthesisSettingName("Include sub directories")]
-        public bool includeSubDirs = true;
+        public bool IncludeSubDirs { set; get; } = true;
 
         [SynthesisSettingName("Aspect Ratio: Width")]
         [SynthesisTooltip("If you have a 16:9 screen, put 16 here.")]
-        public int screenWidth = 16;
+        public int ScreenWidth { set; get; } = 16;
 
         [SynthesisSettingName("Aspect Ratio: Height")]
         [SynthesisTooltip("If you have a 16:9 screen, put 9 here.")]
-        public int screenHeight = 9;
+        public int ScreenHeight { set; get; } = 9;
 
         [SynthesisSettingName("Image Resolution")]
         [SynthesisTooltip("The image resolution of the loading screen texture. It should be larger than your screen resolution.")]
-        public int imageResolution = 2048;
+        public int ImageResolution { set; get; } = 2048;
 
         [SynthesisSettingName("Loading Screen Priority")]
         [SynthesisTooltip("Determines when the loading screens will be used.\n" + Enums.loadingScreenPriorityCombined)]
-        public LoadingScreenPriority loadScreenPriority = LoadingScreenPriority.Mcm;
+        public LoadingScreenPriority LoadScreenPriority { set; get; } = LoadingScreenPriority.Mcm;
 
         [SynthesisSettingName("Frequency")]
         [SynthesisTooltip("How frequently loading screens are used. Only applies to the loading screen choices MCM and Frequency.")]
-        public int frequency = 100;
+        public int Frequency { set; get; } = 100;
 
         [SynthesisSettingName("Border Option")]
         [SynthesisTooltip("How image borders are handled for images that differ from your display aspect ratio.\n" + Enums.borderOptionCombined)]
-        public BorderOption borderOption = BorderOption.Normal;
+        public BorderOption BorderOption { set; get; } = BorderOption.Normal;
 
-        public bool includeLoadingScreenText = true;
+        public bool IncludeLoadingScreenText { set; get; } = true;
 
 
-        public string defaultModFolder { get; } = "JLoadScreens";
-        public string defaultPrefix { get; } = "JLS_";
-        public string defaultPluginName { get; } = "JLoadScreens.esp";
+        public string DefaultModFolder { get; } = "JLoadScreens";
+        public string DefaultPrefix { get; } = "JLS_";
+        public string DefaultPluginName { get; } = "JLoadScreens.esp";
     }
 }

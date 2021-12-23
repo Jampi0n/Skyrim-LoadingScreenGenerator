@@ -53,59 +53,59 @@ namespace LoadScreenGen {
 
 
 
-            if(!Settings.authorSettings.enableAuthorMode) {
-                if(Directory.Exists(Settings.userSettings.sourcePath)) {
-                    if(Settings.userSettings.imageResolution != 1024 && Settings.userSettings.imageResolution != 2048 && Settings.userSettings.imageResolution != 4096 && Settings.userSettings.imageResolution != 8192) {
+            if(!Settings.authorSettings.EnableAuthorMode) {
+                if(Directory.Exists(Settings.userSettings.SourcePath)) {
+                    if(Settings.userSettings.ImageResolution != 1024 && Settings.userSettings.ImageResolution != 2048 && Settings.userSettings.ImageResolution != 4096 && Settings.userSettings.ImageResolution != 8192) {
                         throw new ArgumentException("Image resolution must be 1024, 2048, 4096 or 8192.");
                     }
-                    if(Settings.userSettings.loadScreenPriority == LoadingScreenPriority.Frequency || Settings.userSettings.loadScreenPriority == LoadingScreenPriority.Mcm) {
-                        if(Settings.userSettings.frequency <= 0) {
+                    if(Settings.userSettings.LoadScreenPriority == LoadingScreenPriority.Frequency || Settings.userSettings.LoadScreenPriority == LoadingScreenPriority.Mcm) {
+                        if(Settings.userSettings.Frequency <= 0) {
                             throw new ArgumentException("Frequency must be larger than 0.");
                         }
-                        if(Settings.userSettings.frequency > 100) {
+                        if(Settings.userSettings.Frequency > 100) {
                             throw new ArgumentException("Frequency must be at most 100.");
                         }
                     }
 
                     var stopWatch = Stopwatch.StartNew();
-                    var imageArray = TextureGen.ProcessTextures(Settings.userSettings.sourcePath, new string[] { Path.Combine(state.DataFolderPath, "textures", Settings.userSettings.defaultModFolder) }, new int[] { Settings.userSettings.imageResolution }, Settings.userSettings.includeSubDirs);
+                    var imageArray = TextureGen.ProcessTextures(Settings.userSettings.SourcePath, new string[] { Path.Combine(state.DataFolderPath, "textures", Settings.userSettings.DefaultModFolder) }, new int[] { Settings.userSettings.ImageResolution }, Settings.userSettings.IncludeSubDirs);
                     stopWatch.Stop();
                     Logger.LogTime("Texture generation", stopWatch.Elapsed);
 
                     stopWatch.Restart();
-                    string meshDirectory = Path.Combine(state.DataFolderPath, "meshes", Settings.userSettings.defaultModFolder);
-                    string textureDirectory = Path.Combine("textures", Settings.userSettings.defaultModFolder);
+                    string meshDirectory = Path.Combine(state.DataFolderPath, "meshes", Settings.userSettings.DefaultModFolder);
+                    string textureDirectory = Path.Combine("textures", Settings.userSettings.DefaultModFolder);
                     Directory.CreateDirectory(meshDirectory);
-                    MeshGen.CreateMeshes(imageArray.ToList(), meshDirectory, textureDirectory, templatePath, Settings.userSettings.screenWidth * 1.0 / Settings.userSettings.screenHeight, Settings.userSettings.borderOption);
+                    MeshGen.CreateMeshes(imageArray.ToList(), meshDirectory, textureDirectory, templatePath, Settings.userSettings.ScreenWidth * 1.0 / Settings.userSettings.ScreenHeight, Settings.userSettings.BorderOption);
                     stopWatch.Stop();
                     Logger.LogTime("Mesh generation", stopWatch.Elapsed);
 
                     stopWatch.Restart();
-                    PluginGen.CreateEsp(state.PatchMod, imageArray, Settings.userSettings.defaultModFolder, Settings.userSettings.defaultPrefix, true, Settings.userSettings.frequency, Settings.userSettings.loadScreenPriority);
+                    PluginGen.CreateEsp(state.PatchMod, imageArray, Settings.userSettings.DefaultModFolder, Settings.userSettings.DefaultPrefix, true, Settings.userSettings.Frequency, Settings.userSettings.LoadScreenPriority);
                     stopWatch.Stop();
                     Logger.LogTime("Plugin generation took: ", stopWatch.Elapsed);
                 } else {
                     throw new DirectoryNotFoundException("Cannot find source directory.");
                 }
             } else {
-                if(Directory.Exists(Settings.authorSettings.sourcePath)) {
-                    if(string.IsNullOrEmpty(Settings.authorSettings.modName) || Settings.authorSettings.modName.IndexOfAny(Path.GetInvalidFileNameChars()) >= 0) {
+                if(Directory.Exists(Settings.authorSettings.SourcePath)) {
+                    if(string.IsNullOrEmpty(Settings.authorSettings.ModName) || Settings.authorSettings.ModName.IndexOfAny(Path.GetInvalidFileNameChars()) >= 0) {
                         throw new ArgumentException("The mod name is not a valid file name.");
                     }
-                    if(Settings.authorSettings.modVersion.IndexOfAny(Path.GetInvalidFileNameChars()) >= 0) {
+                    if(Settings.authorSettings.ModVersion.IndexOfAny(Path.GetInvalidFileNameChars()) >= 0) {
                         throw new ArgumentException("The mod version contains invalid characters. Only use characters that can be part of file names.");
                     }
-                    if(string.IsNullOrEmpty(Settings.authorSettings.pluginName) || Settings.authorSettings.pluginName.IndexOfAny(Path.GetInvalidFileNameChars()) >= 0) {
+                    if(string.IsNullOrEmpty(Settings.authorSettings.PluginName) || Settings.authorSettings.PluginName.IndexOfAny(Path.GetInvalidFileNameChars()) >= 0) {
                         throw new ArgumentException("The plugin name is not a valid file name.");
                     }
-                    if(!Settings.authorSettings.pluginName.EndsWith(".esp")) {
+                    if(!Settings.authorSettings.PluginName.EndsWith(".esp")) {
                         throw new ArgumentException("The plugin name must end with \".esp\".");
                     }
                     var validPrefix = new Regex("[a-zA-Z_][a-zA-Z\\d_]*");
-                    if(validPrefix.Match(Settings.authorSettings.pluginPrefix).Value != Settings.authorSettings.pluginPrefix) {
+                    if(validPrefix.Match(Settings.authorSettings.PluginPrefix).Value != Settings.authorSettings.PluginPrefix) {
                         throw new ArgumentException("The plugin prefix is invalid. It must not be empty and must start with a letter or an underscore. Then any number of letters, digits or underscores may follow.");
                     }
-                    if(string.IsNullOrEmpty(Settings.authorSettings.modFolder) || Settings.authorSettings.modFolder.IndexOfAny(Path.GetInvalidFileNameChars()) >= 0) {
+                    if(string.IsNullOrEmpty(Settings.authorSettings.ModFolder) || Settings.authorSettings.ModFolder.IndexOfAny(Path.GetInvalidFileNameChars()) >= 0) {
                         throw new ArgumentException("The mod folder is not a valid file name.");
                     }
 
@@ -119,19 +119,19 @@ namespace LoadScreenGen {
                     var targetDirectory = new List<string>();
                     var imageResolution = new List<int>();
 
-                    targetDirectory.Add(Path.Combine(Path.Combine(state.DataFolderPath, fomodTmpPath, "textures", "2K"), "textures", Settings.authorSettings.modFolder));
+                    targetDirectory.Add(Path.Combine(Path.Combine(state.DataFolderPath, fomodTmpPath, "textures", "2K"), "textures", Settings.authorSettings.ModFolder));
                     imageResolution.Add(2048);
                     if(Settings.authorSettings.resolutionSettings.fourK) {
-                        targetDirectory.Add(Path.Combine(Path.Combine(state.DataFolderPath, fomodTmpPath, "textures", "4K"), "textures", Settings.authorSettings.modFolder));
+                        targetDirectory.Add(Path.Combine(Path.Combine(state.DataFolderPath, fomodTmpPath, "textures", "4K"), "textures", Settings.authorSettings.ModFolder));
                         imageResolution.Add(4096);
                     }
                     if(Settings.authorSettings.resolutionSettings.eightK) {
-                        targetDirectory.Add(Path.Combine(Path.Combine(state.DataFolderPath, fomodTmpPath, "textures", "8K"), "textures", Settings.authorSettings.modFolder));
+                        targetDirectory.Add(Path.Combine(Path.Combine(state.DataFolderPath, fomodTmpPath, "textures", "8K"), "textures", Settings.authorSettings.ModFolder));
                         imageResolution.Add(8192);
                     }
 
-                    string textureDirectory = Path.Combine("textures", Settings.authorSettings.modFolder);
-                    var imageArray = TextureGen.ProcessTextures(Settings.authorSettings.sourcePath, targetDirectory.ToArray(), imageResolution.ToArray(), Settings.authorSettings.includeSubDirs);
+                    string textureDirectory = Path.Combine("textures", Settings.authorSettings.ModFolder);
+                    var imageArray = TextureGen.ProcessTextures(Settings.authorSettings.SourcePath, targetDirectory.ToArray(), imageResolution.ToArray(), Settings.authorSettings.IncludeSubDirs);
                     stopWatch.Stop();
                     Logger.LogTime("Texture generation", stopWatch.Elapsed);
 
@@ -185,20 +185,20 @@ namespace LoadScreenGen {
                             throw new ArgumentException("If there are multiple priority options, the default priority option must be set to one of them.");
                         }
                     }
-                    var outputDirectory = Settings.authorSettings.outputDirectory;
+                    var outputDirectory = Settings.authorSettings.OutputDirectory;
                     if(!Directory.Exists(outputDirectory)) {
                         throw new DirectoryNotFoundException("Cannot find output directory.");
                     }
 
-
-                    var aspectRatios = AspectRatio.Parse(Settings.authorSettings.aspectRatios);
+                    var defaultAspectRatio = AspectRatio.Parse(Settings.authorSettings.DefaultAspectRatio).First();
+                    var aspectRatios = AspectRatio.Parse(Settings.authorSettings.AspectRatios);
                     foreach(var borderOption in borderOptions) {
                         foreach(var aspectRatio in aspectRatios) {
                             var displayRatio = aspectRatio.w * 1.0 / aspectRatio.h;
                             string meshDirectory = Path.Combine(state.DataFolderPath, fomodTmpPath, "meshes");
                             meshDirectory = Path.Combine(meshDirectory, "" + aspectRatio);
                             meshDirectory = Path.Combine(meshDirectory, "" + borderOption);
-                            meshDirectory = Path.Combine(meshDirectory, "meshes", Settings.authorSettings.modFolder);
+                            meshDirectory = Path.Combine(meshDirectory, "meshes", Settings.authorSettings.ModFolder);
                             Directory.CreateDirectory(meshDirectory);
                             MeshGen.CreateMeshes(imageArray.ToList(), meshDirectory, textureDirectory, templatePath, displayRatio, borderOption);
                         }
@@ -210,7 +210,7 @@ namespace LoadScreenGen {
                     stopWatch.Restart();
                     List<int> frequencyList = new();
                     int defaultFrequency;
-                    var frequencyArray = Settings.authorSettings.frequencyList.Split(",");
+                    var frequencyArray = Settings.authorSettings.FrequencyList.Split(",");
                     foreach(var s in frequencyArray) {
                         frequencyList.Add(int.Parse(s));
                         if(!loadScreenPriorities.Contains(LoadingScreenPriority.Frequency) && !loadScreenPriorities.Contains(LoadingScreenPriority.Mcm)) {
@@ -239,7 +239,7 @@ namespace LoadScreenGen {
                     Logger.LogTime("Plugin generation", stopWatch.Elapsed);
 
                     stopWatch.Restart();
-                    FomodGen.CreateFomod(imageArray, aspectRatios, borderOptions, loadScreenPriorities, frequencyList, defaultFrequency, imageResolution, targetDirectory, outputDirectory);
+                    FomodGen.CreateFomod(aspectRatios, borderOptions, loadScreenPriorities, frequencyList, defaultFrequency, imageResolution, defaultAspectRatio);
                     //Directory.Delete(fomodTmpPath, true);
                     stopWatch.Stop();
                     Logger.LogTime("Fomod generation", stopWatch.Elapsed);
@@ -249,13 +249,13 @@ namespace LoadScreenGen {
             }
         }
         public static string GetPluginName(int frequency, bool includeText, LoadingScreenPriority loadScreenPriority) {
-            return "FOMOD_M" + (includeText ? "1" : "0") + "_C_" + loadScreenPriority + "_P" + frequency + "_FOMODEND_" + Settings.authorSettings.pluginName;
+            return "FOMOD_M" + (includeText ? "1" : "0") + "_C_" + loadScreenPriority + "_P" + frequency + "_FOMODEND_" + Settings.authorSettings.PluginName;
         }
         public static void CreatePluginOptions(SkyrimRelease release, string dataPath, int frequency, bool includeText, Image[] imageArray, LoadingScreenPriority loadScreenPriority) {
             var pluginPath = GetPluginName(frequency, includeText, loadScreenPriority);
             pluginPath = Path.Combine(fomodTmpPath, pluginPath);
             var mod = PluginGen.CreateNewEsp(pluginPath, release, dataPath);
-            PluginGen.CreateEsp(mod, imageArray, Settings.authorSettings.modFolder, Settings.authorSettings.pluginPrefix, includeText, frequency, loadScreenPriority);
+            PluginGen.CreateEsp(mod, imageArray, Settings.authorSettings.ModFolder, Settings.authorSettings.PluginPrefix, includeText, frequency, loadScreenPriority);
             PluginGen.WriteNewEsp(mod, pluginPath);
         }
     }

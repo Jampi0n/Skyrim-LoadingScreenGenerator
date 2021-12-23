@@ -235,7 +235,7 @@ namespace LoadScreenGen {
             CopyImage("stretch.png", dest);
         }
 
-        public static void CreateFomod(Image[] imageArray, HashSet<AspectRatio> aspectRatios, HashSet<BorderOption> borderOptions, HashSet<LoadingScreenPriority> loadScreenPriorities, List<int> frequencyList, int defaultFrequency, List<int> imageResolution, List<string> textureDirectory, string outputDirectory) {
+        public static void CreateFomod(HashSet<AspectRatio> aspectRatios, HashSet<BorderOption> borderOptions, HashSet<LoadingScreenPriority> loadScreenPriorities, List<int> frequencyList, int defaultFrequency, List<int> imageResolution, AspectRatio defaultAspectRatio) {
             //Directory.GetCurrentDirectory()
 
             var stopWatch = Stopwatch.StartNew();
@@ -266,12 +266,12 @@ namespace LoadScreenGen {
                     if(loadingScreenText != LoadingScreenText.Never) {
                         var dir = Path.Combine(messagesDir, "" + loadScreenPriority, "" + frequency);
                         Directory.CreateDirectory(dir);
-                        File.Move(Path.Combine(rootDir, Program.GetPluginName(frequency, true, loadScreenPriority)), Path.Combine(dir, Program.Settings.authorSettings.pluginName));
+                        File.Move(Path.Combine(rootDir, Program.GetPluginName(frequency, true, loadScreenPriority)), Path.Combine(dir, Program.Settings.authorSettings.PluginName));
                     }
                     if(loadingScreenText != LoadingScreenText.Always) {
                         var dir = Path.Combine(noMessagesDir, "" + loadScreenPriority, "" + frequency);
                         Directory.CreateDirectory(dir);
-                        File.Move(Path.Combine(rootDir, Program.GetPluginName(frequency, false, loadScreenPriority)), Path.Combine(dir, Program.Settings.authorSettings.pluginName));
+                        File.Move(Path.Combine(rootDir, Program.GetPluginName(frequency, false, loadScreenPriority)), Path.Combine(dir, Program.Settings.authorSettings.PluginName));
                     }
                     if(breakAfter) {
                         break;
@@ -281,15 +281,15 @@ namespace LoadScreenGen {
 
             File.WriteAllLines(Path.Combine(fomodSubDir, "info.xml"), new string[] {
                 "<fomod>",
-                "   <Name>" + Program.Settings.authorSettings.modName + "</Name>",
-                "   <Author>" + Program.Settings.authorSettings.modAuthor + "</Author>",
-                "   <Version>" + Program.Settings.authorSettings.modVersion + "</Version>",
-                "   <Website>" + Program.Settings.authorSettings.modLink + "</Website>",
-                "   <Description>" + Program.Settings.authorSettings.modDescription + "</Description>",
+                "   <Name>" + Program.Settings.authorSettings.ModName + "</Name>",
+                "   <Author>" + Program.Settings.authorSettings.ModAuthor + "</Author>",
+                "   <Version>" + Program.Settings.authorSettings.ModVersion + "</Version>",
+                "   <Website>" + Program.Settings.authorSettings.ModLink + "</Website>",
+                "   <Description>" + Program.Settings.authorSettings.ModDescription + "</Description>",
                 "</fomod>"
             });
 
-            var fomod = new Fomod(Program.Settings.authorSettings.modName);
+            var fomod = new Fomod(Program.Settings.authorSettings.ModName);
 
             // textures
             fomod.AddRequiredFolder("main", "");
@@ -316,6 +316,9 @@ namespace LoadScreenGen {
                         fomod.AddInstallStep(chooseBorderOption);
                     } else {
                         ratioOption.AddFolder(Path.Combine("meshes", aspectRatio.ToString(), borderOptions.First().ToString()), "");
+                    }
+                    if(aspectRatio == defaultAspectRatio) {
+                        ratioOption.SetDefault();
                     }
                     chooseAspectRatio.AddOption(ratioOption);
                 }
@@ -548,7 +551,7 @@ namespace LoadScreenGen {
             Logger.LogTime("[Fomod] xml generation", stopWatch.Elapsed);
 
             stopWatch.Restart();
-            var archiveName = Program.Settings.authorSettings.modName + "_" + Program.Settings.authorSettings.modVersion;
+            var archiveName = Program.Settings.authorSettings.ModName + "_" + Program.Settings.authorSettings.ModVersion;
 
             var zipPath7z = archiveName + ".7z";
             var zipPathZip = archiveName + ".zip";
@@ -559,10 +562,10 @@ namespace LoadScreenGen {
                 Directory.SetCurrentDirectory(fomodDir);
                 TextureGen.ShellExecuteWait("7z", "a \"" + zipPath7z + "\" .\\* -mx");
                 Directory.SetCurrentDirectory(cwd);
-                File.Move(zipPath7z, Path.Combine(Program.Settings.authorSettings.outputDirectory, archiveName + ".7z"), true);
+                File.Move(zipPath7z, Path.Combine(Program.Settings.authorSettings.OutputDirectory, archiveName + ".7z"), true);
             } else {
                 ZipFile.CreateFromDirectory(fomodDir, zipPathZip);
-                File.Move(zipPath7z, Path.Combine(Program.Settings.authorSettings.outputDirectory, archiveName + ".zip"), true);
+                File.Move(zipPath7z, Path.Combine(Program.Settings.authorSettings.OutputDirectory, archiveName + ".zip"), true);
             }
 
             stopWatch.Stop();
@@ -572,7 +575,7 @@ namespace LoadScreenGen {
                 if(imageRes == 2048) { continue; }
                 stopWatch.Restart();
                 var textureResolutionDir = Path.Combine(rootDir, "textures", (imageRes / 1024) + "K");
-                archiveName = Program.Settings.authorSettings.modName + "_Textures" + imageRes + "_" + Program.Settings.authorSettings.modVersion;
+                archiveName = Program.Settings.authorSettings.ModName + "_Textures" + imageRes + "_" + Program.Settings.authorSettings.ModVersion;
                 zipPath7z = archiveName + ".7z";
                 zipPathZip = archiveName + ".zip";
                 zipPath7z = Path.Combine(rootDir, zipPath7z);
@@ -582,10 +585,10 @@ namespace LoadScreenGen {
                     Directory.SetCurrentDirectory(textureResolutionDir);
                     TextureGen.ShellExecuteWait("7z", "a \"" + zipPath7z + "\" .\\* -mx");
                     Directory.SetCurrentDirectory(cwd);
-                    File.Move(zipPath7z, Path.Combine(Program.Settings.authorSettings.outputDirectory, archiveName + ".7z"), true);
+                    File.Move(zipPath7z, Path.Combine(Program.Settings.authorSettings.OutputDirectory, archiveName + ".7z"), true);
                 } else {
                     ZipFile.CreateFromDirectory(fomodDir, zipPathZip);
-                    File.Move(zipPath7z, Path.Combine(Program.Settings.authorSettings.outputDirectory, archiveName + ".zip"), true);
+                    File.Move(zipPath7z, Path.Combine(Program.Settings.authorSettings.OutputDirectory, archiveName + ".zip"), true);
                 }
                 stopWatch.Stop();
                 Logger.LogTime("[Fomod] texutre archive " + imageRes, stopWatch.Elapsed);
