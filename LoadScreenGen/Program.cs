@@ -240,7 +240,7 @@ namespace LoadScreenGen {
 
                     stopWatch.Restart();
                     FomodGen.CreateFomod(imageArray, aspectRatios, borderOptions, loadScreenPriorities, frequencyList, defaultFrequency, imageResolution, targetDirectory, outputDirectory);
-                    Directory.Delete(fomodTmpPath, true);
+                    //Directory.Delete(fomodTmpPath, true);
                     stopWatch.Stop();
                     Logger.LogTime("Fomod generation", stopWatch.Elapsed);
                 } else {

@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Diagnostics;
+using System.Threading.Tasks;
 
 namespace LoadScreenGen {
     public class Image {
@@ -66,10 +67,7 @@ namespace LoadScreenGen {
         /// <param name="imageResolution">Array of image resolutions in pixels (e.g. 2048). Textures for the i-th image resolution will be created in the i-th target directory.</param>
         /// <returns>Array of images found.</returns>
         public static Image[] ProcessTextures(string sourceDirectory, string[] targetDirectory, int[] imageResolution, bool includeSubDirs) {
-            var stopWatch = Stopwatch.StartNew();
             var imageList = new List<string>();
-            TimeSpan imageParseTime = TimeSpan.Zero;
-            var textureGenerationTimes = new TimeSpan[imageResolution.Length];
             SearchOption searchOption = includeSubDirs ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly;
             // Add all image files to a list.
             Logger.Log("Scanning source directory for valid source images...\n");
@@ -93,50 +91,62 @@ namespace LoadScreenGen {
             var uniquePaths = new HashSet<string>();
 
             Logger.Log("	Creating textures from source images...");
+
+            var uniqueImageList = new List<Image>();
+
             for(i = 0; i < imageCount; i += 1) {
+                var image = imageArray[i];
+                string s = Path.GetFileNameWithoutExtension(image.path);
+                if(!uniquePaths.Contains(s)) {
+                    uniqueImageList.Add(image);
+                    uniquePaths.Add(s);
+                }
+            }
+            
+            imageArray = uniqueImageList.ToArray();
+            imageCount = imageArray.Length;
+
+            Parallel.For(0, imageCount, new ParallelOptions() {
+                MaxDegreeOfParallelism = 8,
+            }, (i) => {
                 var image = imageArray[i];
 
                 string s = Path.GetFileNameWithoutExtension(image.path);
                 Logger.Log("	" + (i + 1) + "/" + imageCount + ": " + s);
-                if(!uniquePaths.Contains(s)) {
-                    stopWatch.Restart();
-                    uniquePaths.Add(s);
+            
+                bool srgb;
+                string srgbCmd = "";
 
-                    bool srgb;
-                    string srgbCmd = "";
+                // use texdiag to read input format
 
-                    // use texdiag to read input format
-
-                    string texInfo = ShellExecuteWait(Path.Combine(Program.resourceDirectory, "DirectXTex", "texdiag.exe"), "info \"" + image.path + "\" -nologo");
-                    srgb = texInfo.Contains("SRGB");
-                    var lines = texInfo.Split("\n");
-                    image.width = int.Parse(ParseTexDiagOutput(lines[1]));
-                    image.height = int.Parse(ParseTexDiagOutput(lines[2]));
-                    var textFile = Path.ChangeExtension(image.path, ".txt");
-                    if(File.Exists(textFile)) {
-                        image.text = File.ReadAllText(textFile);
-                    }
-                    if(srgb) {
-                        srgbCmd = "-srgb ";
-                    }
-                    stopWatch.Stop();
-                    imageParseTime = imageParseTime.Add(stopWatch.Elapsed);
-                    for(int j = 0; j < numResolutions; ++j) {
-                        stopWatch.Restart();
-                        int resolution = imageResolution[j];
-                        // Execute texconv.exe (timeout = 10 seconds)
-                        Directory.CreateDirectory(targetDirectory[j]);
-                        string args = "-f BC1_UNORM " + srgbCmd + "-o \"" + targetDirectory[j] + "\" -y -w " + resolution + " -h " + resolution + " \"" + image.path + "\"";
-                        ShellExecuteWait(Path.Combine(Program.resourceDirectory, "DirectXTex", "texconv.exe"), args);
-                        stopWatch.Stop();
-                        textureGenerationTimes[j] = textureGenerationTimes[j].Add(stopWatch.Elapsed);
-                    }
+                string texInfo = ShellExecuteWait(Path.Combine(Program.resourceDirectory, "DirectXTex", "texdiag.exe"), "info \"" + image.path + "\" -nologo");
+                srgb = texInfo.Contains("SRGB");
+                var lines = texInfo.Split("\n");
+                image.width = int.Parse(ParseTexDiagOutput(lines[1]));
+                image.height = int.Parse(ParseTexDiagOutput(lines[2]));
+                var textFile = Path.ChangeExtension(image.path, ".txt");
+                if(File.Exists(textFile)) {
+                    image.text = File.ReadAllText(textFile);
                 }
-            }
-            Logger.LogTime("[Texture] image parsing", imageParseTime);
-            for(int j = 0; j < numResolutions; ++j) {
-                Logger.LogTime("[Texture] " + imageResolution[j], + textureGenerationTimes[j]);
-            }
+                if(srgb) {
+                    srgbCmd = "-srgb ";
+                }
+                for(int j = numResolutions - 1; j >= 0; --j) {
+                    var sourcePath = image.path;
+                    if(j < numResolutions - 1) {
+                        // if multiple resolutions are used, read from existing textures, if they are smaller than the source image
+                        if(image.width * image.height > imageResolution[j+1] * imageResolution[j + 1]) {
+                            sourcePath = Path.Combine(targetDirectory[j+1], Path.GetFileNameWithoutExtension(image.path) + ".dds");
+                        }
+                    }
+                    int resolution = imageResolution[j];
+                    // Execute texconv.exe (timeout = 10 seconds)
+                    Directory.CreateDirectory(targetDirectory[j]);
+                    string args = "-f BC1_UNORM " + srgbCmd + "-o \"" + targetDirectory[j] + "\" -y -w " + resolution + " -h " + resolution + " \"" + sourcePath + "\"";
+                    Logger.Log(args);
+                    ShellExecuteWait(Path.Combine(Program.resourceDirectory, "DirectXTex", "texconv.exe"), args);
+                }
+            });
             return imageArray;
         }
     }

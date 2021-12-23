@@ -30,10 +30,6 @@ namespace LoadScreenGen {
             double width = 1.0;
             double height = 1.0 / ratioFactor;
 
-            Logger.Log("FitToDisplayRatio");
-            Logger.Log("" + displayRatio);
-            Logger.Log("" + imageRatio);
-
             // Now the model fills the entire screen.
             // In order to keep the aspect ratio of the image, the model must be modified.
             // Here, the model only becomes smaller, in order to add black bars.
@@ -65,8 +61,6 @@ namespace LoadScreenGen {
             // Write result.
             widthFactor = width;
             heightFactor = height;
-            Logger.Log("" + width);
-            Logger.Log("" + height);
         }
 
         public static void CreateMeshes(List<Image> imageList, string targetDirectory, string textureDirectory, string templatePath, double displayRatio, BorderOption borderOption) {
@@ -80,8 +74,6 @@ namespace LoadScreenGen {
             int n = imageList.Count;
             foreach(var image in imageList) {
                 var imagePath = image.skyrimPath;
-                Console.WriteLine("	" + (i + 1) + "/" + n + ": " + Path.Combine(targetDirectory, imagePath + ".nif"));
-
                 var newNif = new NifFile(templateNif);
 
                 NiShape shape = newNif.GetShapes()[0];
