@@ -561,12 +561,12 @@ namespace LoadScreenGen {
                 if(use7z) {
                     var cwd = Directory.GetCurrentDirectory();
                     Directory.SetCurrentDirectory(fomodDir);
-                    TextureGen.ShellExecuteWait("7z", "a \"" + zipPath7z + "\" .\\* -mx");
+                    TextureGen.ShellExecuteWait("7z", "a \"" + zipPath7z + "\" .\\* -mx=5");
                     Directory.SetCurrentDirectory(cwd);
                     File.Move(zipPath7z, Path.Combine(Program.Settings.authorSettings.OutputDirectory, archiveName + ".7z"), true);
                 } else {
-                    ZipFile.CreateFromDirectory(fomodDir, zipPathZip);
-                    File.Move(zipPath7z, Path.Combine(Program.Settings.authorSettings.OutputDirectory, archiveName + ".zip"), true);
+                    ZipFile.CreateFromDirectory(fomodDir, zipPathZip, CompressionLevel.Optimal, false);
+                    File.Move(zipPathZip, Path.Combine(Program.Settings.authorSettings.OutputDirectory, archiveName + ".zip"), true);
                 }
 
                 stopWatch.Stop();
@@ -587,12 +587,12 @@ namespace LoadScreenGen {
                 if(use7z) {
                     var cwd = Directory.GetCurrentDirectory();
                     Directory.SetCurrentDirectory(textureResolutionDir);
-                    TextureGen.ShellExecuteWait("7z", "a \"" + zipPath7z + "\" .\\* -mx");
+                    TextureGen.ShellExecuteWait("7z", "a \"" + zipPath7z + "\" .\\* -mx=5");
                     Directory.SetCurrentDirectory(cwd);
                     File.Move(zipPath7z, Path.Combine(Program.Settings.authorSettings.OutputDirectory, archiveName + ".7z"), true);
                 } else {
-                    ZipFile.CreateFromDirectory(fomodDir, zipPathZip);
-                    File.Move(zipPath7z, Path.Combine(Program.Settings.authorSettings.OutputDirectory, archiveName + ".zip"), true);
+                    ZipFile.CreateFromDirectory(fomodDir, zipPathZip, CompressionLevel.Optimal, false);
+                    File.Move(zipPathZip, Path.Combine(Program.Settings.authorSettings.OutputDirectory, archiveName + ".zip"), true);
                 }
                 stopWatch.Stop();
                 Logger.LogTime("[Fomod] texutre archive " + imageRes, stopWatch.Elapsed);
