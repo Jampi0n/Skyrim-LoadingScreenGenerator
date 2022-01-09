@@ -10,12 +10,11 @@ using LoadScreenGen.Settings;
 namespace LoadScreenGen {
 
     public static class MeshGen {
-        const double sourceUpperWidth = 45.5;
-        const double sourceLowerWidth = 1.1;
+        const double sourceUpperWidth = 44.8;
         const double sourceHeightOffset = 1.0;
-        const double sourceHeight = 29.0;
+        const double sourceHeight = 28.65;
         const double sourceOffsetX = 2.5;
-        const double sourceOffsetY = 0.65;
+        const double sourceOffsetY = 0.985;
         const double sourceRatio = 1.6;
 
         static double heightFactor = 0;
@@ -83,12 +82,14 @@ namespace LoadScreenGen {
                     verts[0].y = (float)(sourceOffsetY + sourceHeight * heightFactor - sourceHeightOffset * heightFactor);
 
                     // Bottom Left
-                    verts[1].x = (float)(sourceOffsetX - sourceUpperWidth * widthFactor - sourceLowerWidth * widthFactor * heightFactor);
+                    verts[1].x = (float)(sourceOffsetX - sourceUpperWidth * widthFactor);
                     verts[1].y = (float)(sourceOffsetY - sourceHeight * heightFactor - sourceHeightOffset * heightFactor);
+                    verts[1].z = (float) (8.0 * heightFactor);
 
                     // Bottom Right
-                    verts[2].x = (float)(sourceOffsetX + sourceUpperWidth * widthFactor + sourceLowerWidth * widthFactor * heightFactor);
+                    verts[2].x = (float)(sourceOffsetX + sourceUpperWidth * widthFactor);
                     verts[2].y = (float)(sourceOffsetY - sourceHeight * heightFactor - sourceHeightOffset * heightFactor);
+                    verts[2].z = (float)(8.0 * heightFactor);
 
                     // Top Right
                     verts[3].x = (float)(sourceOffsetX + sourceUpperWidth * widthFactor);
