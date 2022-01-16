@@ -324,6 +324,7 @@ namespace LoadScreenGen {
                 } else {
                     if(borderOptions.Count > 1) {
                         var chooseBorderOption = new InstallStep("Border Options");
+                        fomod.AddInstallStep(chooseBorderOption);
                         foreach(var borderOption in borderOptions) {
                             var borderInstallOption = new InstallOption(borderOption.ToString(), borderOption.ToDescription());
                             borderInstallOption.AddImage(borderOption + ".png");
