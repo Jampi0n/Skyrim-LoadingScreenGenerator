@@ -183,6 +183,7 @@ namespace LoadScreenGen {
         protected abstract void Setup();
         protected abstract void ProcessLscr(Image image, LoadScreen lscr, int counter);
         public static void CreateEsp(ISkyrimMod mod, Image[] imageArray, string meshPath, string prefix, bool includeMessages, int frequency, LoadingScreenPriority loadingScreenPriority) {
+            Logger.DebugMsg("CreateEsp(" + mod + ", Array<Image>(" + imageArray.Length + "), " + meshPath + ", " + prefix + ", " + includeMessages + ", " + frequency + ", " + loadingScreenPriority + ");");
             PluginGen? pluginGen = null;
             if(Program.Settings.authorSettings.EnableAuthorMode) {
                 mod.ModHeader.Author = Program.Settings.authorSettings.ModAuthor;

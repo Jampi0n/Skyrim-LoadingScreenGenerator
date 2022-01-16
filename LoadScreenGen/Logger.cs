@@ -13,6 +13,12 @@ namespace LoadScreenGen {
             Console.WriteLine(s);
         }
 
+        public static void DebugMsg(string s) {
+            if(Program.Settings.EnableDebugMode) {
+                Log(s);
+            }
+        }
+
         public static void LogTime(string s, TimeSpan time) {
             Log(s + " took: " + ((int)(time.TotalSeconds * 10)) / 10.0 + "s");
         }

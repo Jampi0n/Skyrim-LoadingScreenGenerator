@@ -68,6 +68,7 @@ namespace LoadScreenGen {
         /// <param name="imageResolution">Array of image resolutions in pixels (e.g. 2048). Textures for the i-th image resolution will be created in the i-th target directory.</param>
         /// <returns>Array of images found.</returns>
         public static Image[] ProcessTextures(string sourceDirectory, string[] targetDirectory, int[] imageResolution, bool includeSubDirs, TextureCompression[] textureCompression) {
+            Logger.DebugMsg("ProcessTextures(" + sourceDirectory + ", " + "[" + string.Join(",", targetDirectory) + "]"  +  ", " +"[" + string.Join(",", imageResolution) + "]" + ", " + includeSubDirs + ", " +"[" + string.Join(",", textureCompression) + "]" + ");");
             var imageList = new List<string>();
             SearchOption searchOption = includeSubDirs ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly;
             // Add all image files to a list.
@@ -86,12 +87,8 @@ namespace LoadScreenGen {
                 i++;
             }
 
-            Logger.Log(imageCount + " images found in the source directory.");
-
             var numResolutions = Math.Min(targetDirectory.Length, imageResolution.Length);
             var uniquePaths = new HashSet<string>();
-
-            Logger.Log("	Creating textures from source images...");
 
             var uniqueImageList = new List<Image>();
 
@@ -101,11 +98,15 @@ namespace LoadScreenGen {
                 if(!uniquePaths.Contains(s)) {
                     uniqueImageList.Add(image);
                     uniquePaths.Add(s);
+                } else {
+                    Logger.Log("Warning: " + s + " exists multiple times with different extensions. Only one of them will be used!");
                 }
             }
-
             imageArray = uniqueImageList.ToArray();
             imageCount = imageArray.Length;
+
+            Logger.Log(imageCount + " valid images found in the source directory.");
+            Logger.Log("	Creating textures from source images...");
 
             int progressCounter = 0;
 

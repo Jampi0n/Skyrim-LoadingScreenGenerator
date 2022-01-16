@@ -12,5 +12,7 @@ namespace LoadScreenGen.Settings {
 
         [SynthesisSettingName("Author Settings (Create Loading Screen Mod with FOMOD installer)")]
         public AuthorSettings authorSettings = new();
+
+        public bool EnableDebugMode = false;
     }
 }

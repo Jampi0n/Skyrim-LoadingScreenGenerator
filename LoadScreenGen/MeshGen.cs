@@ -63,7 +63,11 @@ namespace LoadScreenGen {
         }
 
         public static void CreateMeshes(List<Image> imageList, string targetDirectory, string textureDirectory, string templatePath, double displayRatio, BorderOption borderOption) {
+            Logger.DebugMsg("CreateMeshes(List<Image>(" + imageList.Count + "), " + targetDirectory + ", " + textureDirectory + ", " + templatePath + ", " + displayRatio + ", " + borderOption + ");");
             var templateNif = new NifFile();
+            if(!File.Exists(templatePath)) {
+                throw new IOException("Nif template does not exist at path: " + templatePath);
+            }
             templateNif.Load(templatePath);
             int i = 0;
             foreach(var image in imageList) {
@@ -99,6 +103,11 @@ namespace LoadScreenGen {
                 }
                 var savePath = Path.Combine(targetDirectory, image.skyrimPath + ".nif");
                 newNif.Save(savePath);
+                if(!File.Exists(savePath)) {
+                    throw new IOException("Failed to save nif file at path: " + savePath);
+                } else {
+                    Logger.DebugMsg("Saved nif file at path: " + savePath);
+                }
                 shape?.Dispose();
                 newNif.Dispose();
                 i++;
