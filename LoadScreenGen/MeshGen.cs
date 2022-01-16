@@ -64,16 +64,26 @@ namespace LoadScreenGen {
 
         public static void CreateMeshes(List<Image> imageList, string targetDirectory, string textureDirectory, string templatePath, double displayRatio, BorderOption borderOption) {
             Logger.DebugMsg("CreateMeshes(List<Image>(" + imageList.Count + "), " + targetDirectory + ", " + textureDirectory + ", " + templatePath + ", " + displayRatio + ", " + borderOption + ");");
+            try {
+                _ = new NifFile();
+            } catch(Exception) {
+                Logger.Log("Failed to create nif file.");
+                throw;
+            }
             var templateNif = new NifFile();
             if(!File.Exists(templatePath)) {
                 throw new IOException("Nif template does not exist at path: " + templatePath);
             }
-            templateNif.Load(templatePath);
+            try {
+                templateNif.Load(templatePath);
+            } catch(Exception) {
+                Logger.Log("Failed to load template nif file.");
+                throw;
+            }
             int i = 0;
             foreach(var image in imageList) {
                 var imagePath = image.skyrimPath;
                 var newNif = new NifFile(templateNif);
-
                 NiShape shape = newNif.GetShapes()[0];
                 if(shape != null) {
                     newNif.SetTextureSlot(shape, Path.Combine(textureDirectory, imagePath + ".dds"));
@@ -100,6 +110,8 @@ namespace LoadScreenGen {
                     verts[3].y = (float)(sourceOffsetY + sourceHeight * heightFactor - sourceHeightOffset * heightFactor);
 
                     newNif.SetVertsForShape(shape, verts);
+                } else {
+                    throw new IOException("Nif template is invalid.");
                 }
                 var savePath = Path.Combine(targetDirectory, image.skyrimPath + ".nif");
                 newNif.Save(savePath);
