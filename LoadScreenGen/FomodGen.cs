@@ -237,7 +237,7 @@ namespace LoadScreenGen {
         }
 
         public static void CreateFomod(HashSet<AspectRatio> aspectRatios, HashSet<BorderOption> borderOptions, HashSet<LoadingScreenPriority> loadScreenPriorities, HashSet<SkyrimRelease> skyrimReleases, List<int> frequencyList, int defaultFrequency, List<int> imageResolution, AspectRatio defaultAspectRatio) {
-            //Directory.GetCurrentDirectory()
+            Logger.DebugMsg("CreateFomod([" + string.Join(",", aspectRatios) + "], [" + string.Join(",", borderOptions) + "], [" + string.Join(",", loadScreenPriorities) + "], [" + string.Join(",", skyrimReleases) + "], [" + string.Join(",", frequencyList) + "], " + defaultFrequency + ", [" + string.Join(",", imageResolution) + "], " + defaultAspectRatio + ");");
 
             var releaseSpecificTextures = Program.Settings.authorSettings.TargetRelease == TargetRelease.LE_and_SE && (int)(Program.Settings.authorSettings.textureCompressionLE) != (int)(Program.Settings.authorSettings.textureCompressionSE);
 
