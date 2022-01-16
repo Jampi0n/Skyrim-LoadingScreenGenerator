@@ -30,7 +30,7 @@ namespace LoadScreenGen.Settings {
 
         [SynthesisSettingName("Loading Screen Priority")]
         [SynthesisTooltip("Determines when the loading screens will be used.\n" + Enums.loadingScreenPriorityCombined)]
-        public LoadingScreenPriority LoadScreenPriority { set; get; } = LoadingScreenPriority.Mcm;
+        public LoadingScreenPriority LoadScreenPriority { set; get; } = LoadingScreenPriority.Standalone;
 
         [SynthesisSettingName("Frequency")]
         [SynthesisTooltip("How frequently loading screens are used. Only applies to the loading screen choices MCM and Frequency.")]
@@ -42,6 +42,12 @@ namespace LoadScreenGen.Settings {
 
         public bool IncludeLoadingScreenText { set; get; } = true;
 
+
+        [SynthesisSettingName("Texture Compression LE")]
+        public TextureCompressionLE textureCompressionLE = TextureCompressionLE.BC1;
+
+        [SynthesisSettingName("Texture Compression SE")]
+        public TextureCompressionSE textureCompressionSE = TextureCompressionSE.BC7;
 
         public string DefaultModFolder { get; } = "JLoadScreens";
         public string DefaultPrefix { get; } = "JLS_";

@@ -67,7 +67,7 @@ namespace LoadScreenGen {
         /// <param name="targetDirectory">Array of target directories. Textures for the i-th image resolution will be created in the i-th target directory.</param>
         /// <param name="imageResolution">Array of image resolutions in pixels (e.g. 2048). Textures for the i-th image resolution will be created in the i-th target directory.</param>
         /// <returns>Array of images found.</returns>
-        public static Image[] ProcessTextures(string sourceDirectory, string[] targetDirectory, int[] imageResolution, bool includeSubDirs) {
+        public static Image[] ProcessTextures(string sourceDirectory, string[] targetDirectory, int[] imageResolution, bool includeSubDirs, TextureCompression[] textureCompression) {
             var imageList = new List<string>();
             SearchOption searchOption = includeSubDirs ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly;
             // Add all image files to a list.
@@ -103,7 +103,7 @@ namespace LoadScreenGen {
                     uniquePaths.Add(s);
                 }
             }
-            
+
             imageArray = uniqueImageList.ToArray();
             imageCount = imageArray.Length;
 
@@ -116,7 +116,7 @@ namespace LoadScreenGen {
 
                 string s = Path.GetFileNameWithoutExtension(image.path);
                 Logger.Log("	" + Interlocked.Increment(ref progressCounter) + "/" + imageCount + ": " + s);
-            
+
                 bool srgb;
                 string srgbCmd = "";
 
@@ -134,18 +134,30 @@ namespace LoadScreenGen {
                 if(srgb) {
                     srgbCmd = "-srgb ";
                 }
-                for(int j = numResolutions - 1; j >= 0; --j) {
-                    var sourcePath = image.path;
-                    if(j < numResolutions - 1) {
-                        // if multiple resolutions are used, read from existing textures, if they are smaller than the source image
-                        if(image.width * image.height > imageResolution[j+1] * imageResolution[j + 1]) {
-                            sourcePath = Path.Combine(targetDirectory[j+1], Path.GetFileNameWithoutExtension(image.path) + ".dds");
+                for(int k = 0; k < textureCompression.Length; ++k) {
+                    string format = textureCompression[k] switch {
+                        TextureCompression.BC1 => "BC1_UNORM",
+                        TextureCompression.BC7 => "BC7_UNORM",
+                        TextureCompression.Uncompressed => "R8G8B8A8_UNORM",
+                        _ => "R8G8B8A8_UNORM",
+                    };
+                    for(int j = numResolutions - 1; j >= 0; --j) {
+                        int dirIndex = k * numResolutions + j;
+                        var sourcePath = image.path;
+                        if(j < numResolutions - 1) {
+                            // if multiple resolutions are used, read from existing textures, if they are smaller than the source image
+                            if(image.width * image.height > imageResolution[j + 1] * imageResolution[j + 1]) {
+                                sourcePath = Path.Combine(targetDirectory[dirIndex + 1], Path.GetFileNameWithoutExtension(image.path) + ".dds");
+                            }
+                        }
+                        int resolution = imageResolution[j];
+                        Directory.CreateDirectory(targetDirectory[dirIndex]);
+                        string args = "-f " + format + " " + srgbCmd + "-o \"" + targetDirectory[dirIndex] + "\" -y -w " + resolution + " -h " + resolution + " \"" + sourcePath + "\"";
+                        var texConvOut = ShellExecuteWait(Path.Combine(Program.resourceDirectory, "DirectXTex", "texconv.exe"), args);
+                        if(texConvOut.Contains("FAILED")) {
+                            Console.WriteLine("Texture conversion failed:\n\t" + texConvOut);
                         }
                     }
-                    int resolution = imageResolution[j];
-                    Directory.CreateDirectory(targetDirectory[j]);
-                    string args = "-f BC1_UNORM " + srgbCmd + "-o \"" + targetDirectory[j] + "\" -y -w " + resolution + " -h " + resolution + " \"" + sourcePath + "\"";
-                    ShellExecuteWait(Path.Combine(Program.resourceDirectory, "DirectXTex", "texconv.exe"), args);
                 }
             });
             return imageArray;

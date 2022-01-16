@@ -239,6 +239,8 @@ namespace LoadScreenGen {
         public static void CreateFomod(HashSet<AspectRatio> aspectRatios, HashSet<BorderOption> borderOptions, HashSet<LoadingScreenPriority> loadScreenPriorities, HashSet<SkyrimRelease> skyrimReleases, List<int> frequencyList, int defaultFrequency, List<int> imageResolution, AspectRatio defaultAspectRatio) {
             //Directory.GetCurrentDirectory()
 
+            var releaseSpecificTextures = Program.Settings.authorSettings.TargetRelease == TargetRelease.LE_and_SE && (int)(Program.Settings.authorSettings.textureCompressionLE) != (int)(Program.Settings.authorSettings.textureCompressionSE);
+
             var stopWatch = new Stopwatch();
 
             var rootDir = Program.fomodTmpPath;
@@ -251,7 +253,9 @@ namespace LoadScreenGen {
             }
             var loadingScreenText = Program.Settings.authorSettings.loadingScreenText;
             var fomodSubDir = Path.Combine(fomodDir, "fomod");
-            Directory.Move(Path.Combine(rootDir, "textures", "2K", "textures"), Path.Combine(mainDir, "textures"));
+            if(!releaseSpecificTextures) {
+                Directory.Move(Path.Combine(rootDir, "textures", "2K", "textures"), Path.Combine(mainDir, "textures"));
+            }
             CopyImages(Path.Combine(fomodSubDir, "images"));
 
             bool use7z = false;
@@ -262,6 +266,15 @@ namespace LoadScreenGen {
             } catch(Exception) { }
 
             foreach(var release in skyrimReleases) {
+                if(releaseSpecificTextures) {
+                    var texDir = Path.Combine(mainDir, "textures");
+                    if(Directory.Exists(texDir)) {
+                        Directory.Delete(texDir, true);
+                    }
+                    Directory.Move(Path.Combine(rootDir, "textures", release.ToString(), "2K", "textures"), texDir);
+                }
+
+
                 File.WriteAllLines(Path.Combine(fomodSubDir, "info.xml"), new string[] {
                     "<fomod>",
                     "   <Name>" + Program.Settings.authorSettings.ModName + "</Name>",
@@ -578,21 +591,35 @@ namespace LoadScreenGen {
             foreach(var imageRes in imageResolution) {
                 if(imageRes == 2048) { continue; }
                 stopWatch.Restart();
-                var textureResolutionDir = Path.Combine(rootDir, "textures", (imageRes / 1024) + "K");
-                var archiveName = Program.Settings.authorSettings.ModName + "_Textures" + imageRes + "_" + Program.Settings.authorSettings.ModVersion;
-                var zipPath7z = archiveName + ".7z";
-                var zipPathZip = archiveName + ".zip";
-                zipPath7z = Path.Combine(rootDir, zipPath7z);
-                zipPathZip = Path.Combine(rootDir, zipPathZip);
-                if(use7z) {
-                    var cwd = Directory.GetCurrentDirectory();
-                    Directory.SetCurrentDirectory(textureResolutionDir);
-                    TextureGen.ShellExecuteWait("7z", "a \"" + zipPath7z + "\" .\\* -mx=5");
-                    Directory.SetCurrentDirectory(cwd);
-                    File.Move(zipPath7z, Path.Combine(Program.Settings.authorSettings.OutputDirectory, archiveName + ".7z"), true);
-                } else {
-                    ZipFile.CreateFromDirectory(fomodDir, zipPathZip, CompressionLevel.Optimal, false);
-                    File.Move(zipPathZip, Path.Combine(Program.Settings.authorSettings.OutputDirectory, archiveName + ".zip"), true);
+                
+                foreach(var release in skyrimReleases) {
+                    var textureResolutionDir = (imageRes / 1024) + "K";
+                    var archiveName = imageRes + "_" + Program.Settings.authorSettings.ModVersion;
+                    if(releaseSpecificTextures) {
+                        textureResolutionDir = Path.Combine(release.ToString(), textureResolutionDir);
+                        archiveName = release.ToString() + "_" + archiveName;
+                    }
+                    textureResolutionDir = Path.Combine(rootDir, "textures", textureResolutionDir);
+                    archiveName = Program.Settings.authorSettings.ModName + "_Textures_" + archiveName;
+
+
+                    var zipPath7z = archiveName + ".7z";
+                    var zipPathZip = archiveName + ".zip";
+                    zipPath7z = Path.Combine(rootDir, zipPath7z);
+                    zipPathZip = Path.Combine(rootDir, zipPathZip);
+                    if(use7z) {
+                        var cwd = Directory.GetCurrentDirectory();
+                        Directory.SetCurrentDirectory(textureResolutionDir);
+                        TextureGen.ShellExecuteWait("7z", "a \"" + zipPath7z + "\" .\\* -mx=5");
+                        Directory.SetCurrentDirectory(cwd);
+                        File.Move(zipPath7z, Path.Combine(Program.Settings.authorSettings.OutputDirectory, archiveName + ".7z"), true);
+                    } else {
+                        ZipFile.CreateFromDirectory(fomodDir, zipPathZip, CompressionLevel.Optimal, false);
+                        File.Move(zipPathZip, Path.Combine(Program.Settings.authorSettings.OutputDirectory, archiveName + ".zip"), true);
+                    }
+                    if(!releaseSpecificTextures) {
+                        break;
+                    }
                 }
                 stopWatch.Stop();
                 Logger.LogTime("[Fomod] texutre archive " + imageRes, stopWatch.Elapsed);

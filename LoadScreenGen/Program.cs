@@ -66,7 +66,8 @@ namespace LoadScreenGen {
                     }
 
                     var stopWatch = Stopwatch.StartNew();
-                    var imageArray = TextureGen.ProcessTextures(Settings.userSettings.SourcePath, new string[] { Path.Combine(state.DataFolderPath, "textures", Settings.userSettings.DefaultModFolder) }, new int[] { Settings.userSettings.ImageResolution }, Settings.userSettings.IncludeSubDirs);
+                    var textureCompression = (TextureCompression)(sse ? (int)Settings.userSettings.textureCompressionSE : (int)Settings.userSettings.textureCompressionLE);
+                    var imageArray = TextureGen.ProcessTextures(Settings.userSettings.SourcePath, new string[] { Path.Combine(state.DataFolderPath, "textures", Settings.userSettings.DefaultModFolder) }, new int[] { Settings.userSettings.ImageResolution }, Settings.userSettings.IncludeSubDirs, new TextureCompression[] { textureCompression });
                     stopWatch.Stop();
                     Logger.LogTime("Texture generation", stopWatch.Elapsed);
 
@@ -123,19 +124,43 @@ namespace LoadScreenGen {
                     var targetDirectory = new List<string>();
                     var imageResolution = new List<int>();
 
-                    targetDirectory.Add(Path.Combine(Path.Combine(state.DataFolderPath, fomodTmpPath, "textures", "2K"), "textures", Settings.authorSettings.ModFolder));
+                    targetDirectory.Add(Path.Combine( "2K", "textures", Settings.authorSettings.ModFolder));
                     imageResolution.Add(2048);
                     if(Settings.authorSettings.resolutionSettings.fourK) {
-                        targetDirectory.Add(Path.Combine(Path.Combine(state.DataFolderPath, fomodTmpPath, "textures", "4K"), "textures", Settings.authorSettings.ModFolder));
+                        targetDirectory.Add(Path.Combine("4K", "textures", Settings.authorSettings.ModFolder));
                         imageResolution.Add(4096);
                     }
                     if(Settings.authorSettings.resolutionSettings.eightK) {
-                        targetDirectory.Add(Path.Combine(Path.Combine(state.DataFolderPath, fomodTmpPath, "textures", "8K"), "textures", Settings.authorSettings.ModFolder));
+                        targetDirectory.Add(Path.Combine("8K", "textures", Settings.authorSettings.ModFolder));
                         imageResolution.Add(8192);
                     }
+                    
 
                     string textureDirectory = Path.Combine("textures", Settings.authorSettings.ModFolder);
-                    var imageArray = TextureGen.ProcessTextures(Settings.authorSettings.SourcePath, targetDirectory.ToArray(), imageResolution.ToArray(), Settings.authorSettings.IncludeSubDirs);
+
+                    TextureCompression[] textureCompression;
+                    if(Settings.authorSettings.TargetRelease == TargetRelease.LE_and_SE && (int)(Settings.authorSettings.textureCompressionLE) != (int)(Settings.authorSettings.textureCompressionSE)) {
+                        textureCompression = new TextureCompression[] {
+                            (TextureCompression) (int)Settings.authorSettings.textureCompressionLE,
+                            (TextureCompression) (int)Settings.authorSettings.textureCompressionSE,
+                        };
+                        var tmp = targetDirectory;
+                        targetDirectory = new List<string>();
+                        foreach(var path in tmp) {
+                            targetDirectory.Add(Path.Combine(SkyrimRelease.SkyrimLE.ToString(), path));
+                        }
+                        foreach(var path in tmp) {
+                            targetDirectory.Add(Path.Combine(SkyrimRelease.SkyrimSE.ToString(), path));
+                        }
+                    } else {
+                        textureCompression = new TextureCompression[] { (TextureCompression)(Settings.authorSettings.TargetRelease == TargetRelease.SE_Only ? (int)Settings.authorSettings.textureCompressionSE : (int)Settings.authorSettings.textureCompressionLE) };
+                    }
+
+                    for(int i = 0; i < targetDirectory.Count; ++i) {
+                        targetDirectory[i] = Path.Combine(fomodTmpPath, "textures", targetDirectory[i]);
+                    }
+
+                    var imageArray = TextureGen.ProcessTextures(Settings.authorSettings.SourcePath, targetDirectory.ToArray(), imageResolution.ToArray(), Settings.authorSettings.IncludeSubDirs, textureCompression);
                     stopWatch.Stop();
                     Logger.LogTime("Texture generation", stopWatch.Elapsed);
 

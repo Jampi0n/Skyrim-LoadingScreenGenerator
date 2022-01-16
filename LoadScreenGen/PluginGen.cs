@@ -24,7 +24,6 @@ namespace LoadScreenGen {
             var cond = new ConditionFloat();
             var condData = new FunctionConditionData();
             cond.Data = condData;
-            cond.Flags = Condition.Flag.UseGlobal;
             condData.Function = Condition.Function.GetRandomPercent;
             cond.ComparisonValue = 100;
             cond.CompareOperator = CompareOperator.LessThanOrEqualTo;

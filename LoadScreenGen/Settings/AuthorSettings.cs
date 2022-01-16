@@ -107,6 +107,12 @@ namespace LoadScreenGen.Settings {
         [SynthesisTooltip("List of possible frequency choices. The first element will be the default selected item in the Fomod installer.")]
         public string FrequencyList { set; get; } = "15,30,50,100";
 
+        [SynthesisSettingName("Texture Compression LE")]
+        public TextureCompressionLE textureCompressionLE = TextureCompressionLE.BC1;
+
+        [SynthesisSettingName("Texture Compression SE")]
+        public TextureCompressionSE textureCompressionSE = TextureCompressionSE.BC7;
+
         [SynthesisTooltip("The Fomod installer will be created in this directory.")]
         public string OutputDirectory { set; get; } = "";
 

@@ -6,6 +6,23 @@ using System.Threading.Tasks;
 
 namespace LoadScreenGen {
 
+    public enum TextureCompression : int {
+        BC1 = 1,
+        BC7 = 7,
+        Uncompressed = -1
+    }
+
+    public enum TextureCompressionLE : int{
+        BC1 = TextureCompression.BC1,
+        Uncompressed = TextureCompression.Uncompressed
+    }
+
+    public enum TextureCompressionSE : int{
+        BC1 = TextureCompression.BC1,
+        BC7 = TextureCompression.BC7,
+        Uncompressed = TextureCompression.Uncompressed
+    }
+
     public enum LoadingScreenText {
         Always,
         Never,
@@ -35,6 +52,10 @@ namespace LoadScreenGen {
     }
 
     public static class Enums {
+        public const string compressionBC1 = "Low file size, but lower quality. More noticeable on images with different shades of dark colors.";
+        public const string compressionBC7 = "Twice the file size as BC1, but much better quality. Almost the same quality as uncompressed. Highly recommended.";
+        public const string compressionUncompressed = "Six times the file size as BC1. Best quality.";
+
 
         public const string borderOptionNormal = "Normal: The image is extended with black to fit the screen. The image will be fully visible.";
         public const string borderOptionCrop = "Crop: The image is cropped to fit the screen. Parts of the image will be hidden.";

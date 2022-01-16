@@ -12,9 +12,9 @@ namespace LoadScreenGen {
     public static class MeshGen {
         const double sourceUpperWidth = 44.8;
         const double sourceHeightOffset = 1.0;
-        const double sourceHeight = 28.65;
+        const double sourceHeight = 27.7;
         const double sourceOffsetX = 2.5;
-        const double sourceOffsetY = 0.985;
+        const double sourceOffsetY = 1.5;
         const double sourceRatio = 1.6;
 
         static double heightFactor = 0;

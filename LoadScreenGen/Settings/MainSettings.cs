@@ -6,7 +6,6 @@ using System.Threading.Tasks;
 using Mutagen.Bethesda.Synthesis.Settings;
 
 namespace LoadScreenGen.Settings {
-
     public class MainSettings {
         [SynthesisSettingName("User Settings (Generate Loading Screens for you)")]
         public UserSettings userSettings = new();
