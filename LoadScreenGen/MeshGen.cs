@@ -11,14 +11,13 @@ namespace LoadScreenGen {
 
     public static class MeshGen {
         const double sourceUpperWidth = 44.8;
-        const double sourceHeightOffset = 1.0;
         const double sourceHeight = 27.7;
         const double sourceOffsetX = 2.5;
-        const double sourceOffsetY = 1.5;
         const double sourceRatio = 1.6;
 
         static double heightFactor = 0;
         static double widthFactor = 0;
+        static double yOffset = 0;
 
         public static void FitToDisplayRatio(double displayRatio, double imageRatio, BorderOption borderOption) {
             // In the first part, the factors are adjusted, so the model fills the entire screen.
@@ -87,27 +86,46 @@ namespace LoadScreenGen {
                 NiShape shape = newNif.GetShapes()[0];
                 if(shape != null) {
                     newNif.SetTextureSlot(shape, Path.Combine(textureDirectory, imagePath + ".dds"));
-                    FitToDisplayRatio(displayRatio, image.width * 1.0 / image.height, borderOption);
+                    var imageRatio = image.width * 1.0 / image.height;
+                    FitToDisplayRatio(displayRatio, imageRatio, borderOption);
 
                     var verts = newNif.GetVertsForShape(shape);
-                    
+                    if(borderOption == BorderOption.Normal) {
+                        if(imageRatio > displayRatio) {
+                            yOffset = 0.37;
+                        } else {
+                            yOffset = -0.108 * displayRatio + 0.622;
+                        }
+                    } else if(borderOption == BorderOption.Crop) {
+                        yOffset = -0.108 * displayRatio + 0.622;
+                    } else if(borderOption == BorderOption.FixedHeight) {
+                        yOffset = -0.108 * displayRatio + 0.622;
+                    } else if(borderOption == BorderOption.FixedWidth) {
+                        if(imageRatio > displayRatio) {
+                            yOffset = 0.37;
+                        } else {
+                            yOffset = -0.108 * displayRatio + 0.622;
+                        }
+                    } else {
+                        yOffset = -0.108 * displayRatio + 0.622;
+                    }
                     // Top Left
                     verts[0].x = (float)(sourceOffsetX - sourceUpperWidth * widthFactor);
-                    verts[0].y = (float)(sourceOffsetY + sourceHeight * heightFactor - sourceHeightOffset * heightFactor);
+                    verts[0].y = (float)(yOffset + sourceHeight * heightFactor);
 
                     // Bottom Left
                     verts[1].x = (float)(sourceOffsetX - sourceUpperWidth * widthFactor);
-                    verts[1].y = (float)(sourceOffsetY - sourceHeight * heightFactor - sourceHeightOffset * heightFactor);
-                    verts[1].z = (float) (8.0 * heightFactor);
+                    verts[1].y = (float)(yOffset - sourceHeight * heightFactor);
+                    verts[1].z = (float)(8.0 * heightFactor);
 
                     // Bottom Right
                     verts[2].x = (float)(sourceOffsetX + sourceUpperWidth * widthFactor);
-                    verts[2].y = (float)(sourceOffsetY - sourceHeight * heightFactor - sourceHeightOffset * heightFactor);
+                    verts[2].y = (float)(yOffset - sourceHeight * heightFactor);
                     verts[2].z = (float)(8.0 * heightFactor);
 
                     // Top Right
                     verts[3].x = (float)(sourceOffsetX + sourceUpperWidth * widthFactor);
-                    verts[3].y = (float)(sourceOffsetY + sourceHeight * heightFactor - sourceHeightOffset * heightFactor);
+                    verts[3].y = (float)(yOffset + sourceHeight * heightFactor);
 
                     newNif.SetVertsForShape(shape, verts);
                 } else {
