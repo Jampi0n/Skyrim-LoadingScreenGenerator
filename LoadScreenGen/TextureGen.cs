@@ -68,7 +68,7 @@ namespace LoadScreenGen {
         /// <param name="imageResolution">Array of image resolutions in pixels (e.g. 2048). Textures for the i-th image resolution will be created in the i-th target directory.</param>
         /// <returns>Array of images found.</returns>
         public static Image[] ProcessTextures(string sourceDirectory, string[] targetDirectory, int[] imageResolution, bool includeSubDirs, TextureCompression[] textureCompression) {
-            Logger.DebugMsg("ProcessTextures(" + sourceDirectory + ", " + "[" + string.Join(",", targetDirectory) + "]"  +  ", " +"[" + string.Join(",", imageResolution) + "]" + ", " + includeSubDirs + ", " +"[" + string.Join(",", textureCompression) + "]" + ");");
+            Logger.DebugMsg("ProcessTextures(" + sourceDirectory + ", " + "[" + string.Join(",", targetDirectory) + "]" + ", " + "[" + string.Join(",", imageResolution) + "]" + ", " + includeSubDirs + ", " + "[" + string.Join(",", textureCompression) + "]" + ");");
             var imageList = new List<string>();
             SearchOption searchOption = includeSubDirs ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly;
             // Add all image files to a list.
@@ -87,7 +87,11 @@ namespace LoadScreenGen {
                 i++;
             }
 
-            var numResolutions = Math.Min(targetDirectory.Length, imageResolution.Length);
+            var numResolutions = imageResolution.Length;
+            if(numResolutions * textureCompression.Length != targetDirectory.Length) {
+                throw new ArgumentException("The number of target directories must be equal the number of resolution times the number of texture compressions.");
+            }
+
             var uniquePaths = new HashSet<string>();
 
             var uniqueImageList = new List<Image>();
@@ -156,7 +160,10 @@ namespace LoadScreenGen {
                         string args = "-f " + format + " " + srgbCmd + "-o \"" + targetDirectory[dirIndex] + "\" -y -w " + resolution + " -h " + resolution + " \"" + sourcePath + "\"";
                         var texConvOut = ShellExecuteWait(Path.Combine(Program.resourceDirectory, "DirectXTex", "texconv.exe"), args);
                         if(texConvOut.Contains("FAILED")) {
-                            Console.WriteLine("Texture conversion failed:\n\t" + texConvOut);
+                            throw new IOException("texconv.exe failed:\n\t" + texConvOut);
+                        }
+                        if(!File.Exists(Path.Combine(targetDirectory[dirIndex], Path.GetFileNameWithoutExtension(image.path) + ".dds"))) {
+                            throw new IOException("Texture conversion failed. No texture file was created.");
                         }
                     }
                 }
