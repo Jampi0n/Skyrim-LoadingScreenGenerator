@@ -132,6 +132,7 @@ namespace LoadScreenGen {
                     throw new IOException("Nif template is invalid.");
                 }
                 var savePath = Path.Combine(targetDirectory, image.skyrimPath + ".nif");
+                Directory.CreateDirectory(Path.Combine(savePath, ".."));
                 newNif.Save(savePath);
                 if(!File.Exists(savePath)) {
                     throw new IOException("Failed to save nif file at path: " + savePath);

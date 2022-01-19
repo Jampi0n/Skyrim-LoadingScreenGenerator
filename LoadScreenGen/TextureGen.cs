@@ -98,7 +98,7 @@ namespace LoadScreenGen {
 
             for(i = 0; i < imageCount; i += 1) {
                 var image = imageArray[i];
-                string s = Path.GetFileNameWithoutExtension(image.path);
+                string s = image.skyrimPath;
                 if(!uniquePaths.Contains(s)) {
                     uniqueImageList.Add(image);
                     uniquePaths.Add(s);
@@ -152,17 +152,19 @@ namespace LoadScreenGen {
                         if(j < numResolutions - 1) {
                             // if multiple resolutions are used, read from existing textures, if they are smaller than the source image
                             if(image.width * image.height > imageResolution[j + 1] * imageResolution[j + 1]) {
-                                sourcePath = Path.Combine(targetDirectory[dirIndex + 1], Path.GetFileNameWithoutExtension(image.path) + ".dds");
+                                sourcePath = Path.Combine(targetDirectory[dirIndex + 1], image.skyrimPath + ".dds");
                             }
                         }
                         int resolution = imageResolution[j];
-                        Directory.CreateDirectory(targetDirectory[dirIndex]);
-                        string args = "-f " + format + " " + srgbCmd + "-o \"" + targetDirectory[dirIndex] + "\" -y -w " + resolution + " -h " + resolution + " \"" + sourcePath + "\"";
+                        var outPath = Path.Combine(targetDirectory[dirIndex], image.skyrimPath, "..");
+
+                        Directory.CreateDirectory(outPath);
+                        string args = "-f " + format + " " + srgbCmd + "-o \"" + outPath + "\" -y -w " + resolution + " -h " + resolution + " \"" + sourcePath + "\"";
                         var texConvOut = ShellExecuteWait(Path.Combine(Program.resourceDirectory, "DirectXTex", "texconv.exe"), args);
                         if(texConvOut.Contains("FAILED")) {
                             throw new IOException("texconv.exe failed:\n\t" + texConvOut);
                         }
-                        if(!File.Exists(Path.Combine(targetDirectory[dirIndex], Path.GetFileNameWithoutExtension(image.path) + ".dds"))) {
+                        if(!File.Exists(Path.Combine(targetDirectory[dirIndex], image.skyrimPath + ".dds"))) {
                             throw new IOException("Texture conversion failed. No texture file was created.");
                         }
                     }
