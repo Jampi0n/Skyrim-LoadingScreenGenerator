@@ -108,6 +108,7 @@ namespace LoadScreenGen {
             }
             imageArray = uniqueImageList.ToArray();
             imageCount = imageArray.Length;
+            var imageException = new Exception?[imageCount];
 
             Logger.Log(imageCount + " valid images found in the source directory.");
             Logger.Log("	Creating textures from source images...");
@@ -118,59 +119,77 @@ namespace LoadScreenGen {
                 MaxDegreeOfParallelism = 8,
             }, (i) => {
                 var image = imageArray[i];
+                try {
+                    string s = Path.GetFileNameWithoutExtension(image.path);
+                    Logger.Log("	" + Interlocked.Increment(ref progressCounter) + "/" + imageCount + ": " + s);
 
-                string s = Path.GetFileNameWithoutExtension(image.path);
-                Logger.Log("	" + Interlocked.Increment(ref progressCounter) + "/" + imageCount + ": " + s);
+                    bool srgb;
+                    string srgbCmd = "";
 
-                bool srgb;
-                string srgbCmd = "";
+                    // use texdiag to read input format
 
-                // use texdiag to read input format
+                    string texInfo = ShellExecuteWait(Path.Combine(Program.resourceDirectory, "DirectXTex", "texdiag.exe"), "info \"" + image.path + "\" -nologo");
+                    srgb = texInfo.Contains("SRGB");
+                    var lines = texInfo.Split("\n");
+                    if(lines.Length < 2 || lines[0].Contains("FAILED")) {
+                        throw new IOException("texdiag.exe failed to read the source image");
+                    }
+                    if(!lines[1].TrimStart().StartsWith("width = ") || !lines[2].TrimStart().StartsWith("height = ")) {
+                        throw new IOException("texdiag.exe output has unexpected format");
+                    }
+                    image.width = int.Parse(ParseTexDiagOutput(lines[1]));
+                    image.height = int.Parse(ParseTexDiagOutput(lines[2]));
+                    var textFile = Path.ChangeExtension(image.path, ".txt");
+                    if(File.Exists(textFile)) {
+                        image.text = File.ReadAllText(textFile);
+                    }
+                    if(srgb) {
+                        srgbCmd = "-srgb ";
+                    }
+                    for(int k = 0; k < textureCompression.Length; ++k) {
+                        string format = textureCompression[k] switch {
+                            TextureCompression.BC1 => "BC1_UNORM",
+                            TextureCompression.BC7 => "BC7_UNORM",
+                            TextureCompression.Uncompressed => "R8G8B8A8_UNORM",
+                            _ => "R8G8B8A8_UNORM",
+                        };
+                        for(int j = numResolutions - 1; j >= 0; --j) {
+                            int dirIndex = k * numResolutions + j;
+                            var sourcePath = image.path;
+                            if(j < numResolutions - 1) {
+                                // if multiple resolutions are used, read from existing textures, if they are smaller than the source image
+                                if(image.width * image.height > imageResolution[j + 1] * imageResolution[j + 1]) {
+                                    sourcePath = Path.Combine(targetDirectory[dirIndex + 1], image.skyrimPath + ".dds");
+                                }
+                            }
+                            int resolution = imageResolution[j];
+                            var outPath = Path.Combine(targetDirectory[dirIndex], image.skyrimPath, "..");
 
-                string texInfo = ShellExecuteWait(Path.Combine(Program.resourceDirectory, "DirectXTex", "texdiag.exe"), "info \"" + image.path + "\" -nologo");
-                srgb = texInfo.Contains("SRGB");
-                var lines = texInfo.Split("\n");
-                image.width = int.Parse(ParseTexDiagOutput(lines[1]));
-                image.height = int.Parse(ParseTexDiagOutput(lines[2]));
-                var textFile = Path.ChangeExtension(image.path, ".txt");
-                if(File.Exists(textFile)) {
-                    image.text = File.ReadAllText(textFile);
-                }
-                if(srgb) {
-                    srgbCmd = "-srgb ";
-                }
-                for(int k = 0; k < textureCompression.Length; ++k) {
-                    string format = textureCompression[k] switch {
-                        TextureCompression.BC1 => "BC1_UNORM",
-                        TextureCompression.BC7 => "BC7_UNORM",
-                        TextureCompression.Uncompressed => "R8G8B8A8_UNORM",
-                        _ => "R8G8B8A8_UNORM",
-                    };
-                    for(int j = numResolutions - 1; j >= 0; --j) {
-                        int dirIndex = k * numResolutions + j;
-                        var sourcePath = image.path;
-                        if(j < numResolutions - 1) {
-                            // if multiple resolutions are used, read from existing textures, if they are smaller than the source image
-                            if(image.width * image.height > imageResolution[j + 1] * imageResolution[j + 1]) {
-                                sourcePath = Path.Combine(targetDirectory[dirIndex + 1], image.skyrimPath + ".dds");
+                            Directory.CreateDirectory(outPath);
+                            string args = "-f " + format + " " + srgbCmd + "-o \"" + outPath + "\" -y -w " + resolution + " -h " + resolution + " \"" + sourcePath + "\"";
+                            var texConvOut = ShellExecuteWait(Path.Combine(Program.resourceDirectory, "DirectXTex", "texconv.exe"), args);
+                            if(texConvOut.Contains("FAILED")) {
+                                throw new IOException("texconv.exe failed:\n\t" + texConvOut);
+                            }
+                            if(!File.Exists(Path.Combine(targetDirectory[dirIndex], image.skyrimPath + ".dds"))) {
+                                throw new IOException("Texture conversion failed. No texture file was created at the expected path: " + Path.Combine(targetDirectory[dirIndex], image.skyrimPath + ".dds"));
                             }
                         }
-                        int resolution = imageResolution[j];
-                        var outPath = Path.Combine(targetDirectory[dirIndex], image.skyrimPath, "..");
-
-                        Directory.CreateDirectory(outPath);
-                        string args = "-f " + format + " " + srgbCmd + "-o \"" + outPath + "\" -y -w " + resolution + " -h " + resolution + " \"" + sourcePath + "\"";
-                        var texConvOut = ShellExecuteWait(Path.Combine(Program.resourceDirectory, "DirectXTex", "texconv.exe"), args);
-                        if(texConvOut.Contains("FAILED")) {
-                            throw new IOException("texconv.exe failed:\n\t" + texConvOut);
-                        }
-                        if(!File.Exists(Path.Combine(targetDirectory[dirIndex], image.skyrimPath + ".dds"))) {
-                            throw new IOException("Texture conversion failed. No texture file was created.");
-                        }
                     }
+                } catch(Exception e) {
+                    imageException[i] = e;
                 }
             });
-            return imageArray;
+            List<Image> generatedImages = new();
+            for(i = 0;i<imageCount;++i) {
+                if(imageException[i] != null) {
+                    Logger.Log("Warning: Failed to create all textures for image " + imageArray[i].path + " with message: " + imageException[i]!.Message);
+                } else {
+                    generatedImages.Add(imageArray[i]);
+                }
+            }
+
+            return generatedImages.ToArray();
         }
     }
 }
