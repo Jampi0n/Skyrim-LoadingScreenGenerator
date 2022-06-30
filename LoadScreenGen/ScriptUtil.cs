@@ -44,7 +44,7 @@ namespace LoadScreenGen {
             var prop = new ScriptObjectProperty {
                 Name = name,
                 Flags = ScriptProperty.Flag.Edited,
-                Object = obj.AsNullableLink(),
+                Object = obj.ToNullableLink(),
                 Alias = -1
             };
             script.Properties.Add(prop);
@@ -117,8 +117,8 @@ namespace LoadScreenGen {
         public ScriptedQuestPlayerAlias(Quest quest, string questName, string aliasName = "PlayerAlias") : base(quest, questName) {
             playerAlias = new QuestAlias {
                 Name = aliasName,
-                Flags = new QuestAlias.Flag(),
-                VoiceTypes = FormKey.Null.AsNullableLink<IAliasVoiceTypeGetter>()
+                Flags = QuestAlias.Flag.AllowReserved,
+                VoiceTypes = FormKey.Null.ToNullableLink<IAliasVoiceTypeGetter>()
             };
             playerAlias.ForcedReference.SetTo(Constants.Player.Cast<IPlacedGetter>());
             quest.Aliases.Add(playerAlias);   
@@ -126,10 +126,9 @@ namespace LoadScreenGen {
 
         public QuestFragmentAlias AddQuestFragmentAlias() {
             var playerAliasFragment = new QuestFragmentAlias();
-            playerAliasFragment.Property.Object = quest.AsNullableLink();
+            playerAliasFragment.Property.Object = quest.ToNullableLink();
             playerAliasFragment.Property.Alias = 0;
             quest.VirtualMachineAdapter!.Aliases.Add(playerAliasFragment);
-            quest.VirtualMachineAdapter.Unknown = 2;
             return playerAliasFragment;
         }
 
