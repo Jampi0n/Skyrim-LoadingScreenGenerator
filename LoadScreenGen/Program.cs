@@ -30,7 +30,7 @@ namespace LoadScreenGen {
                     nickname: "Settings",
                     path: "settings.json",
                     out _Settings)
-                .SetTypicalOpen(GameRelease.SkyrimLE, "YourPatcher.esp")
+                .SetTypicalOpen(GameRelease.SkyrimLE, "LoadScreenGen.esp")
                 .Run(args);
         }
 
