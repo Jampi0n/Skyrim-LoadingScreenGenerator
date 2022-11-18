@@ -4,5 +4,12 @@
   "OneLineDescription": "Creates a fully working loading screen mod from the images within a selected directory.",
   "LongDescription": "",
   "PreferredAutoVersioning": "Default",
-  "RequiredMods": []
+  "RequiredMods": [],
+  "TargetedReleases": [
+    "SkyrimLE",
+    "SkyrimSE",
+    "SkyrimVR",
+    "EnderalLE",
+    "EnderalSE"
+  ]
 }
