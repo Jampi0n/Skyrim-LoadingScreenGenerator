@@ -589,6 +589,10 @@ namespace LoadScreenGen {
                 Directory.Delete(Path.Combine(fomodDir, "" + release), true);
             }
 
+            if(useScripts) {
+                Directory.Delete(Path.Combine(fomodDir, "main", "scripts"), true);
+            }
+
             foreach(var imageRes in imageResolution) {
                 if(imageRes == 2048) { continue; }
                 stopWatch.Restart();
@@ -615,7 +619,7 @@ namespace LoadScreenGen {
                         Directory.SetCurrentDirectory(cwd);
                         File.Move(zipPath7z, Path.Combine(Program.Settings.authorSettings.OutputDirectory, archiveName + ".7z"), true);
                     } else {
-                        ZipFile.CreateFromDirectory(fomodDir, zipPathZip, CompressionLevel.Optimal, false);
+                        ZipFile.CreateFromDirectory(textureResolutionDir, zipPathZip, CompressionLevel.Optimal, false);
                         File.Move(zipPathZip, Path.Combine(Program.Settings.authorSettings.OutputDirectory, archiveName + ".zip"), true);
                     }
                     if(!releaseSpecificTextures) {
