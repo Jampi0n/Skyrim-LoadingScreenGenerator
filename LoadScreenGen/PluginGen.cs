@@ -189,6 +189,9 @@ namespace LoadScreenGen {
                 mod.ModHeader.Author = Program.Settings.authorSettings.ModAuthor;
                 mod.ModHeader.Description = Program.Settings.authorSettings.ModDescription;
             }
+            if(imageArray.Length < 900 && mod.SkyrimRelease == SkyrimRelease.SkyrimSE) {
+                mod.ModHeader.Flags |= SkyrimModHeader.HeaderFlag.LightMaster;
+            }
             switch(loadingScreenPriority) {
                 case LoadingScreenPriority.Standalone:
                     pluginGen = new PluginStandalone();
