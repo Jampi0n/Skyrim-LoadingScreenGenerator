@@ -61,7 +61,7 @@ namespace LoadScreenGen {
             heightFactor = height;
         }
 
-        public static void CreateMeshes(List<Image> imageList, string targetDirectory, string textureDirectory, string templatePath, double displayRatio, BorderOption borderOption) {
+        public static void CreateMeshes(List<Image> imageList, string targetDirectory, string textureDirectory, string templatePath, double displayRatio, BorderOption borderOption, IniCompatibilitySettings iniCompatibilitySettings) {
             Logger.DebugMsg("CreateMeshes(List<Image>(" + imageList.Count + "), " + targetDirectory + ", " + textureDirectory + ", " + templatePath + ", " + displayRatio + ", " + borderOption + ");");
             try {
                 _ = new NifFile();
@@ -109,23 +109,30 @@ namespace LoadScreenGen {
                     } else {
                         yOffset = -0.108 * displayRatio + 0.622;
                     }
+
+                    var fovScale = (iniCompatibilitySettings.fUIMistMenu_CameraFOV_G - 3) / 72.0;
+                    var iniX = iniCompatibilitySettings.fUIAltLogoModel_TranslateX_G * 0.5;
+                    var iniY = -iniCompatibilitySettings.fUIAltLogoModel_TranslateZ_G * 0.5;
+                    widthFactor *= fovScale;
+                    heightFactor *= fovScale;
+
                     // Top Left
-                    verts[0].x = (float)(sourceOffsetX - sourceUpperWidth * widthFactor);
-                    verts[0].y = (float)(yOffset + sourceHeight * heightFactor);
+                    verts[0].x = (float)(sourceOffsetX - sourceUpperWidth * widthFactor + iniX);
+                    verts[0].y = (float)(yOffset + sourceHeight * heightFactor + iniY);
 
                     // Bottom Left
-                    verts[1].x = (float)(sourceOffsetX - sourceUpperWidth * widthFactor);
-                    verts[1].y = (float)(yOffset - sourceHeight * heightFactor);
+                    verts[1].x = (float)(sourceOffsetX - sourceUpperWidth * widthFactor + iniX);
+                    verts[1].y = (float)(yOffset - sourceHeight * heightFactor + iniY);
                     verts[1].z = (float)(8.0 * heightFactor);
 
                     // Bottom Right
-                    verts[2].x = (float)(sourceOffsetX + sourceUpperWidth * widthFactor);
-                    verts[2].y = (float)(yOffset - sourceHeight * heightFactor);
+                    verts[2].x = (float)(sourceOffsetX + sourceUpperWidth * widthFactor + iniX);
+                    verts[2].y = (float)(yOffset - sourceHeight * heightFactor + iniY);
                     verts[2].z = (float)(8.0 * heightFactor);
 
                     // Top Right
-                    verts[3].x = (float)(sourceOffsetX + sourceUpperWidth * widthFactor);
-                    verts[3].y = (float)(yOffset + sourceHeight * heightFactor);
+                    verts[3].x = (float)(sourceOffsetX + sourceUpperWidth * widthFactor + iniX);
+                    verts[3].y = (float)(yOffset + sourceHeight * heightFactor + iniY);
 
                     newNif.SetVertsForShape(shape, verts);
                 } else {

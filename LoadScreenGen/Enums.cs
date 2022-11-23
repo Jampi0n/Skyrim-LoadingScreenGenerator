@@ -1,3 +1,4 @@
+using Mutagen.Bethesda.Synthesis.Settings;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -51,11 +52,38 @@ namespace LoadScreenGen {
         Debug
     }
 
+    public enum TextureResolutionOption {
+        MainArchive,
+        ExtraArchive,
+        None
+    }
+
+    public class NamedIniCompatibilitySettings {
+        public string name = "";
+        public IniCompatibilitySettings iniCompatibilitySettings = new();
+    }
+
+    public class IniCompatibilitySettings {
+        [SynthesisSettingName("fUIMistMenu_CameraFOV_G")]
+        public float fUIMistMenu_CameraFOV_G = 75;
+        [SynthesisSettingName("fUIAltLogoModel_TranslateX_G")]
+        public float fUIAltLogoModel_TranslateX_G = 0;
+        [SynthesisSettingName("fUIAltLogoModel_TranslateZ_G")]
+        public float fUIAltLogoModel_TranslateZ_G = 0;
+    }
+
     public static class Enums {
         public const string compressionBC1 = "Low file size, but lower quality. More noticeable on images with different shades of dark colors.";
         public const string compressionBC7 = "Twice the file size as BC1, but much better quality. Almost the same quality as uncompressed. Highly recommended.";
         public const string compressionUncompressed = "Six times the file size as BC1. Best quality.";
 
+        public const string compressionLE = compressionBC1 + "\n" + compressionUncompressed;
+        public const string compressionSE = compressionBC1 + "\n" + compressionBC7 + "\n" + compressionUncompressed;
+
+        public const string textureResolutionMainArchive = "Main Archive: Includes the textures in the main FOMOD installer.";
+        public const string textureResolutionExtraArchive = "Extra Archive: Generates a separate archive.";
+        public const string textureResolutionNone = "None: Generates no textures. Much faster.";
+        public const string textureResolutionCombined = textureResolutionMainArchive + "\n" + textureResolutionExtraArchive + "\n" + textureResolutionNone;
 
         public const string borderOptionNormal = "Normal: The image is extended with black to fit the screen. The image will be fully visible.";
         public const string borderOptionCrop = "Crop: The image is cropped to fit the screen. Parts of the image will be hidden.";

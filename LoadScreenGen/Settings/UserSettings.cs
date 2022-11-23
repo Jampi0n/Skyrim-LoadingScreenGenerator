@@ -49,6 +49,8 @@ namespace LoadScreenGen.Settings {
         [SynthesisSettingName("Texture Compression SE")]
         public TextureCompressionSE textureCompressionSE = TextureCompressionSE.BC7;
 
+        public IniCompatibilitySettings IniCompatibilitySettings = new();
+
         public string DefaultModFolder { get; } = "JLoadScreens";
         public string DefaultPrefix { get; } = "JLS_";
         public string DefaultPluginName { get; } = "JLoadScreens.esp";

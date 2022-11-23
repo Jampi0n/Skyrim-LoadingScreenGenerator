@@ -39,9 +39,14 @@ namespace LoadScreenGen.Settings {
     }
 
     public class ResolutionSettings {
-        [SynthesisTooltip("Additionally creates 4K textures (2K option is always included). Takes much longer.")]
+
+
+
+        [SynthesisTooltip(Enums.textureResolutionCombined)]
+        public TextureResolutionOption twoK = TextureResolutionOption.MainArchive;
+        [SynthesisTooltip("Creates 4K textures in an extra archive. Takes much longer.")]
         public bool fourK = true;
-        [SynthesisTooltip("Additionally creates 8K textures (2K option is always included). Takes much much longer. Not recommended.")]
+        [SynthesisTooltip("Creates 8K textures in an extra archive. Takes much much longer. Not recommended.")]
         public bool eightK = false;
     }
 
@@ -108,14 +113,32 @@ namespace LoadScreenGen.Settings {
         public string FrequencyList { set; get; } = "15,30,50,100";
 
         [SynthesisSettingName("Texture Compression LE")]
+        [SynthesisTooltip(Enums.compressionLE)]
         public TextureCompressionLE textureCompressionLE = TextureCompressionLE.BC1;
 
         [SynthesisSettingName("Texture Compression SE")]
+        [SynthesisTooltip(Enums.compressionSE)]
         public TextureCompressionSE textureCompressionSE = TextureCompressionSE.BC7;
 
         [SynthesisTooltip("The Fomod installer will be created in this directory.")]
         public string OutputDirectory { set; get; } = "";
 
         public LoadingScreenText loadingScreenText = LoadingScreenText.Optional;
+
+        public List<NamedIniCompatibilitySettings> NamedIniCompatibilitySettings = new() { new NamedIniCompatibilitySettings() {
+            name = "Vanilla",
+            iniCompatibilitySettings = new() {
+                fUIAltLogoModel_TranslateX_G = 0,
+                fUIAltLogoModel_TranslateZ_G = 0,
+                fUIMistMenu_CameraFOV_G = 75
+            }
+        }, new NamedIniCompatibilitySettings() {
+            name = "Complete Widescreen Fix",
+            iniCompatibilitySettings = new() {
+                fUIAltLogoModel_TranslateX_G = 15,
+                fUIAltLogoModel_TranslateZ_G = 0,
+                fUIMistMenu_CameraFOV_G = 100
+            }
+        } };
     }
 }

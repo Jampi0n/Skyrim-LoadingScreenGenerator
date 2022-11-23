@@ -81,7 +81,7 @@ namespace LoadScreenGen {
                     } else {
                         templatePath = Path.Combine(resourceDirectory, "TemplateLE.nif");
                     }
-                    MeshGen.CreateMeshes(imageArray.ToList(), meshDirectory, textureDirectory, templatePath, Settings.userSettings.ScreenWidth * 1.0 / Settings.userSettings.ScreenHeight, Settings.userSettings.BorderOption);
+                    MeshGen.CreateMeshes(imageArray.ToList(), meshDirectory, textureDirectory, templatePath, Settings.userSettings.ScreenWidth * 1.0 / Settings.userSettings.ScreenHeight, Settings.userSettings.BorderOption, Settings.userSettings.IniCompatibilitySettings);
                     stopWatch.Stop();
                     Logger.LogTime("Mesh generation", stopWatch.Elapsed);
 
@@ -124,8 +124,10 @@ namespace LoadScreenGen {
                     var targetDirectory = new List<string>();
                     var imageResolution = new List<int>();
 
-                    targetDirectory.Add(Path.Combine( "2K", "textures", Settings.authorSettings.ModFolder));
-                    imageResolution.Add(2048);
+                    if(Settings.authorSettings.resolutionSettings.twoK != TextureResolutionOption.None) {
+                        targetDirectory.Add(Path.Combine("2K", "textures", Settings.authorSettings.ModFolder));
+                        imageResolution.Add(2048);
+                    }
                     if(Settings.authorSettings.resolutionSettings.fourK) {
                         targetDirectory.Add(Path.Combine("4K", "textures", Settings.authorSettings.ModFolder));
                         imageResolution.Add(4096);
@@ -214,6 +216,9 @@ namespace LoadScreenGen {
                             throw new ArgumentException("If there are multiple priority options, the default priority option must be set to one of them.");
                         }
                     }
+                    if(Settings.authorSettings.NamedIniCompatibilitySettings.Count == 0) {
+                        throw new ArgumentException("At least one ini compatibility option must be provided.");
+                    }
                     var outputDirectory = Settings.authorSettings.OutputDirectory;
                     if(!Directory.Exists(outputDirectory)) {
                         throw new DirectoryNotFoundException("Cannot find output directory.");
@@ -229,22 +234,25 @@ namespace LoadScreenGen {
                     if(Settings.authorSettings.TargetRelease != TargetRelease.LE_Only) {
                         skyrimReleases.Add(SkyrimRelease.SkyrimSE);
                     }
-                    foreach(var borderOption in borderOptions) {
-                        foreach(var aspectRatio in aspectRatios) {
-                            foreach(var release in skyrimReleases) {
-                                string templatePath;
-                                if(release == SkyrimRelease.SkyrimSE) {
-                                    templatePath = Path.Combine(resourceDirectory, "TemplateSSE.nif");
-                                } else {
-                                    templatePath = Path.Combine(resourceDirectory, "TemplateLE.nif");
+                    foreach(var iniCompat in Settings.authorSettings.NamedIniCompatibilitySettings) {
+                        foreach(var borderOption in borderOptions) {
+                            foreach(var aspectRatio in aspectRatios) {
+                                foreach(var release in skyrimReleases) {
+                                    string templatePath;
+                                    if(release == SkyrimRelease.SkyrimSE) {
+                                        templatePath = Path.Combine(resourceDirectory, "TemplateSSE.nif");
+                                    } else {
+                                        templatePath = Path.Combine(resourceDirectory, "TemplateLE.nif");
+                                    }
+                                    var displayRatio = aspectRatio.w * 1.0 / aspectRatio.h;
+                                    string meshDirectory = Path.Combine(state.DataFolderPath, fomodTmpPath, "" + release, "meshes");
+                                    meshDirectory = Path.Combine(meshDirectory, "" + aspectRatio);
+                                    meshDirectory = Path.Combine(meshDirectory, "" + iniCompat.name);
+                                    meshDirectory = Path.Combine(meshDirectory, "" + borderOption);
+                                    meshDirectory = Path.Combine(meshDirectory, "meshes", Settings.authorSettings.ModFolder);
+                                    Directory.CreateDirectory(meshDirectory);
+                                    MeshGen.CreateMeshes(imageArray.ToList(), meshDirectory, textureDirectory, templatePath, displayRatio, borderOption, iniCompat.iniCompatibilitySettings);
                                 }
-                                var displayRatio = aspectRatio.w * 1.0 / aspectRatio.h;
-                                string meshDirectory = Path.Combine(state.DataFolderPath, fomodTmpPath, "" + release, "meshes");
-                                meshDirectory = Path.Combine(meshDirectory, "" + aspectRatio);
-                                meshDirectory = Path.Combine(meshDirectory, "" + borderOption);
-                                meshDirectory = Path.Combine(meshDirectory, "meshes", Settings.authorSettings.ModFolder);
-                                Directory.CreateDirectory(meshDirectory);
-                                MeshGen.CreateMeshes(imageArray.ToList(), meshDirectory, textureDirectory, templatePath, displayRatio, borderOption);
                             }
                         }
                     }

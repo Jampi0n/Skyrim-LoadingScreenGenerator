@@ -253,7 +253,7 @@ namespace LoadScreenGen {
             }
             var loadingScreenText = Program.Settings.authorSettings.loadingScreenText;
             var fomodSubDir = Path.Combine(fomodDir, "fomod");
-            if(!releaseSpecificTextures) {
+            if(!releaseSpecificTextures && Program.Settings.authorSettings.resolutionSettings.twoK == TextureResolutionOption.MainArchive) {
                 Directory.Move(Path.Combine(rootDir, "textures", "2K", "textures"), Path.Combine(mainDir, "textures"));
             }
             CopyImages(Path.Combine(fomodSubDir, "images"));
@@ -266,7 +266,7 @@ namespace LoadScreenGen {
             } catch(Exception) { }
 
             foreach(var release in skyrimReleases) {
-                if(releaseSpecificTextures) {
+                if(releaseSpecificTextures && Program.Settings.authorSettings.resolutionSettings.twoK == TextureResolutionOption.MainArchive) {
                     var texDir = Path.Combine(mainDir, "textures");
                     if(Directory.Exists(texDir)) {
                         Directory.Delete(texDir, true);
@@ -293,28 +293,82 @@ namespace LoadScreenGen {
                 fomod.AddRequiredFolder("main", "");
 
                 // meshes
+                var iniCompatSettings = Program.Settings.authorSettings.NamedIniCompatibilitySettings;
                 if(aspectRatios.Count > 1) {
+                    //===========================================================================================================================
+                    //                                      ASPECT RATIO + ? + ?
+                    //===========================================================================================================================
                     var chooseAspectRatio = new InstallStep("Aspect Ratio");
                     fomod.AddInstallStep(chooseAspectRatio);
                     foreach(var aspectRatio in aspectRatios) {
                         var ratioOption = new InstallOption("" + aspectRatio, "Use this option, if you have an aspect ratio of " + aspectRatio + ".");
-                        if(borderOptions.Count > 1) {
+                        if(iniCompatSettings.Count > 1) {
+                            //===========================================================================================================================
+                            //                                      ASPECT RATIO + INI COMPAT + ?
+                            //===========================================================================================================================
                             ratioOption.AddFlag("aspect_ratio_" + aspectRatio, "true");
-                            var chooseBorderOption = new InstallStep("Border Options");
-
-                            foreach(var borderOption in borderOptions) {
-                                var borderInstallOption = new InstallOption(borderOption.ToString(), borderOption.ToDescription());
-                                borderInstallOption.AddFolder(Path.Combine("" + release, "meshes", aspectRatio.ToString(), borderOption.ToString()), "");
-                                borderInstallOption.AddImage(borderOption + ".png");
-                                if(Program.Settings.authorSettings.borderSettings.defaultBorderOption == borderOption) {
-                                    borderInstallOption.SetDefault();
+                            var chooseIniCompat = new InstallStep("Ini Compatibility Settings");
+                            fomod.AddInstallStep(chooseIniCompat);
+                            foreach(var iniCompat in iniCompatSettings) {
+                                var iniCompatOption = new InstallOption(iniCompat.name, "For compatibility with " + iniCompat.name + ".");
+                                if(borderOptions.Count > 1) {
+                                    //===========================================================================================================================
+                                    //                                      ASPECT RATIO + INI COMPAT + BORDER
+                                    //===========================================================================================================================
+                                    iniCompatOption.AddFlag("aspect_ratio_" + aspectRatio + "_ini_compat_" + iniCompat.name, "true");
+                                    var chooseBorderOption = new InstallStep("Border Options");
+                                    foreach(var borderOption in borderOptions) {
+                                        var borderInstallOption = new InstallOption(borderOption.ToString(), borderOption.ToDescription());
+                                        borderInstallOption.AddFolder(Path.Combine("" + release, "meshes", aspectRatio.ToString(), iniCompat.name, borderOption.ToString()), "");
+                                        borderInstallOption.AddImage(borderOption + ".png");
+                                        if(Program.Settings.authorSettings.borderSettings.defaultBorderOption == borderOption) {
+                                            borderInstallOption.SetDefault();
+                                        }
+                                        chooseBorderOption.AddOption(borderInstallOption);
+                                    }
+                                    chooseBorderOption.RequireFlag("aspect_ratio_" + aspectRatio + "_ini_compat_" + iniCompat.name, "true");
+                                    fomod.AddInstallStep(chooseBorderOption);
+                                } else {
+                                    //===========================================================================================================================
+                                    //                                      ASPECT RATIO + INI COMPAT + _
+                                    //===========================================================================================================================
+                                    ratioOption.AddFolder(Path.Combine("" + release, "meshes", aspectRatio.ToString(), iniCompatSettings.First().name, borderOptions.First().ToString()), "");
                                 }
-                                chooseBorderOption.AddOption(borderInstallOption);
+                                if(iniCompatSettings.First() == iniCompat) {
+                                    iniCompatOption.SetDefault();
+                                }
+                                chooseIniCompat.AddOption(iniCompatOption);
                             }
-                            chooseBorderOption.RequireFlag("aspect_ratio_" + aspectRatio, "true");
-                            fomod.AddInstallStep(chooseBorderOption);
+                            chooseIniCompat.RequireFlag("aspect_ratio_" + aspectRatio, "true");
+
                         } else {
-                            ratioOption.AddFolder(Path.Combine("" + release, "meshes", aspectRatio.ToString(), borderOptions.First().ToString()), "");
+                            //===========================================================================================================================
+                            //                                      ASPECT RATIO + _ + ?
+                            //===========================================================================================================================
+                            if(borderOptions.Count > 1) {
+                                //===========================================================================================================================
+                                //                                      ASPECT RATIO + _ + BORDER
+                                //===========================================================================================================================
+                                ratioOption.AddFlag("aspect_ratio_" + aspectRatio, "true");
+                                var chooseBorderOption = new InstallStep("Border Options");
+
+                                foreach(var borderOption in borderOptions) {
+                                    var borderInstallOption = new InstallOption(borderOption.ToString(), borderOption.ToDescription());
+                                    borderInstallOption.AddFolder(Path.Combine("" + release, "meshes", aspectRatio.ToString(), iniCompatSettings.First().name, borderOption.ToString()), "");
+                                    borderInstallOption.AddImage(borderOption + ".png");
+                                    if(Program.Settings.authorSettings.borderSettings.defaultBorderOption == borderOption) {
+                                        borderInstallOption.SetDefault();
+                                    }
+                                    chooseBorderOption.AddOption(borderInstallOption);
+                                }
+                                chooseBorderOption.RequireFlag("aspect_ratio_" + aspectRatio, "true");
+                                fomod.AddInstallStep(chooseBorderOption);
+                            } else {
+                                //===========================================================================================================================
+                                //                                      ASPECT RATIO + _ + _
+                                //===========================================================================================================================
+                                ratioOption.AddFolder(Path.Combine("" + release, "meshes", aspectRatio.ToString(), iniCompatSettings.First().name, borderOptions.First().ToString()), "");
+                            }
                         }
                         if(aspectRatio == defaultAspectRatio) {
                             ratioOption.SetDefault();
@@ -322,20 +376,70 @@ namespace LoadScreenGen {
                         chooseAspectRatio.AddOption(ratioOption);
                     }
                 } else {
-                    if(borderOptions.Count > 1) {
-                        var chooseBorderOption = new InstallStep("Border Options");
-                        fomod.AddInstallStep(chooseBorderOption);
-                        foreach(var borderOption in borderOptions) {
-                            var borderInstallOption = new InstallOption(borderOption.ToString(), borderOption.ToDescription());
-                            borderInstallOption.AddImage(borderOption + ".png");
-                            borderInstallOption.AddFolder(Path.Combine("" + release, "meshes", aspectRatios.First().ToString(), borderOption.ToString()), "");
-                            if(Program.Settings.authorSettings.borderSettings.defaultBorderOption == borderOption) {
-                                borderInstallOption.SetDefault();
+                    //===========================================================================================================================
+                    //                                      _ + ? + ?
+                    //===========================================================================================================================
+                    if(iniCompatSettings.Count > 1) {
+                        //===========================================================================================================================
+                        //                                      _ + INI COMPAT + ?
+                        //===========================================================================================================================
+                        var chooseIniCompat = new InstallStep("Ini Compatibility Settings");
+                        fomod.AddInstallStep(chooseIniCompat);
+                        foreach(var iniCompat in iniCompatSettings) {
+                            var iniCompatOption = new InstallOption(iniCompat.name, "For compatibility with " + iniCompat.name + ".");
+                            if(borderOptions.Count > 1) {
+                                //===========================================================================================================================
+                                //                                      _ + INI COMPAT + BORDER
+                                //===========================================================================================================================
+                                iniCompatOption.AddFlag("ini_compat_" + iniCompat.name, "true");
+                                var chooseBorderOption = new InstallStep("Border Options");
+                                foreach(var borderOption in borderOptions) {
+                                    var borderInstallOption = new InstallOption(borderOption.ToString(), borderOption.ToDescription());
+                                    borderInstallOption.AddFolder(Path.Combine("" + release, "meshes", aspectRatios.First().ToString(), iniCompat.name, borderOption.ToString()), "");
+                                    borderInstallOption.AddImage(borderOption + ".png");
+                                    if(Program.Settings.authorSettings.borderSettings.defaultBorderOption == borderOption) {
+                                        borderInstallOption.SetDefault();
+                                    }
+                                    chooseBorderOption.AddOption(borderInstallOption);
+                                }
+                                chooseBorderOption.RequireFlag("ini_compat_" + iniCompat.name, "true");
+                                fomod.AddInstallStep(chooseBorderOption);
+                            } else {
+                                //===========================================================================================================================
+                                //                                      _ + INI COMPAT + _
+                                //===========================================================================================================================
+                                iniCompatOption.AddFolder(Path.Combine("" + release, "meshes", aspectRatios.First().ToString(), iniCompat.name, borderOptions.First().ToString()), "");
                             }
-                            chooseBorderOption.AddOption(borderInstallOption);
+                            if(iniCompatSettings.First() == iniCompat) {
+                                iniCompatOption.SetDefault();
+                            }
+                            chooseIniCompat.AddOption(iniCompatOption);
                         }
                     } else {
-                        fomod.AddRequiredFolder(Path.Combine("" + release, "meshes", aspectRatios.First().ToString(), borderOptions.First().ToString()), "");
+                        //===========================================================================================================================
+                        //                                      _ + _ + ?
+                        //===========================================================================================================================
+                        if(borderOptions.Count > 1) {
+                            //===========================================================================================================================
+                            //                                      _ + _ + BORDER
+                            //===========================================================================================================================
+                            var chooseBorderOption = new InstallStep("Border Options");
+                            fomod.AddInstallStep(chooseBorderOption);
+                            foreach(var borderOption in borderOptions) {
+                                var borderInstallOption = new InstallOption(borderOption.ToString(), borderOption.ToDescription());
+                                borderInstallOption.AddImage(borderOption + ".png");
+                                borderInstallOption.AddFolder(Path.Combine("" + release, "meshes", aspectRatios.First().ToString(), iniCompatSettings.First().name, borderOption.ToString()), "");
+                                if(Program.Settings.authorSettings.borderSettings.defaultBorderOption == borderOption) {
+                                    borderInstallOption.SetDefault();
+                                }
+                                chooseBorderOption.AddOption(borderInstallOption);
+                            }
+                        } else {
+                            //===========================================================================================================================
+                            //                                      _ + _ + _
+                            //===========================================================================================================================
+                            fomod.AddRequiredFolder(Path.Combine("" + release, "meshes", aspectRatios.First().ToString(), iniCompatSettings.First().name, borderOptions.First().ToString()), "");
+                        }
                     }
                 }
 
@@ -594,9 +698,9 @@ namespace LoadScreenGen {
             }
 
             foreach(var imageRes in imageResolution) {
-                if(imageRes == 2048) { continue; }
+                if(imageRes == 2048 && Program.Settings.authorSettings.resolutionSettings.twoK != TextureResolutionOption.ExtraArchive) { continue; }
                 stopWatch.Restart();
-                
+
                 foreach(var release in skyrimReleases) {
                     var textureResolutionDir = (imageRes / 1024) + "K";
                     var archiveName = imageRes + "_" + Program.Settings.authorSettings.ModVersion;
