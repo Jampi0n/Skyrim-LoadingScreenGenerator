@@ -42,7 +42,7 @@ namespace LoadScreenGen {
             var condData = new FunctionConditionData();
             cond.Data = condData;
             condData.Function = Condition.Function.GetGlobalValue;
-            condData.ParameterOneRecord = debugGlobal!.AsNullableLink();
+            condData.ParameterOneRecord = debugGlobal!.ToNullableLink();
             cond.ComparisonValue = counter;
             cond.CompareOperator = CompareOperator.EqualTo;
             lscr.Conditions.Add(cond);
@@ -116,8 +116,8 @@ namespace LoadScreenGen {
             cond.Data = condData;
             cond.Flags = Condition.Flag.UseGlobal;
             condData.Function = Condition.Function.GetGlobalValue;
-            condData.ParameterOneRecord = syncRandomVar!.AsNullableLink();
-            cond.ComparisonValue = configFrequencyVar!.AsNullableLink();
+            condData.ParameterOneRecord = syncRandomVar!.ToNullableLink();
+            cond.ComparisonValue = configFrequencyVar!.ToNullableLink();
             cond.CompareOperator = CompareOperator.LessThanOrEqualTo;
             lscr.Conditions.Add(cond);
         }
