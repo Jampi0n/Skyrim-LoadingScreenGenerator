@@ -132,10 +132,10 @@ namespace LoadScreenGen {
                     srgb = texInfo.Contains("SRGB");
                     var lines = texInfo.Split("\n");
                     if(lines.Length < 2 || lines[0].Contains("FAILED")) {
-                        throw new IOException("texdiag.exe failed to read the source image");
+                        throw new IOException("texdiag.exe failed to read the source image. Output: >\n" + texInfo + "\n<");
                     }
                     if(!lines[1].TrimStart().StartsWith("width = ") || !lines[2].TrimStart().StartsWith("height = ")) {
-                        throw new IOException("texdiag.exe output has unexpected format");
+                        throw new IOException("texdiag.exe output has unexpected format. Output: >\n" + texInfo + "\n<");
                     }
                     image.width = int.Parse(ParseTexDiagOutput(lines[1]));
                     image.height = int.Parse(ParseTexDiagOutput(lines[2]));
