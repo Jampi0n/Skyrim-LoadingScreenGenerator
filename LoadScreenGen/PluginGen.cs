@@ -9,6 +9,7 @@ using Mutagen.Bethesda.Skyrim;
 using Mutagen.Bethesda.FormKeys.SkyrimLE;
 using Mutagen.Bethesda.Plugins;
 using System.IO;
+using Mutagen.Bethesda.Plugins.Binary.Parameters;
 
 namespace LoadScreenGen {
 
@@ -62,7 +63,7 @@ namespace LoadScreenGen {
             configFrequencyVar.EditorID = prefix + "configFrequencyVar";
             configFrequencyVar.RawFloat = frequency;
             ScriptEntry script;
-            if(Skyrim.Cell.AAADeleteWhenDoneTestJeremy.TryResolveContext<ISkyrimMod, ISkyrimModGetter, ICell, ICellGetter>(Program.state!.LinkCache, out var context)) {
+            if(Skyrim.Cell.UnownedCell.TryResolveContext<ISkyrimMod, ISkyrimModGetter, ICell, ICellGetter>(Program.state!.LinkCache, out var context)) {
                 var cellStalkerCell = context.GetOrAddAsOverride(mod);
                 marker = new PlacedObject(mod) {
                     MajorRecordFlagsRaw = (int)PlacedObject.StaticMajorFlag.Persistent,
@@ -220,15 +221,13 @@ namespace LoadScreenGen {
         }
 
         public static ISkyrimMod CreateNewEsp(string pluginPath, SkyrimRelease release, string dataPath) {
-            var skyrimEsmPath = Path.Combine(dataPath, "Skyrim.esm");
-            using ISkyrimModDisposableGetter skyrimESM = SkyrimMod.CreateFromBinaryOverlay(skyrimEsmPath, release);
-
-
             return new SkyrimMod(ModKey.FromNameAndExtension(Path.GetFileName(pluginPath)), release);
         }
 
         public static void WriteNewEsp(ISkyrimMod mod, string pluginPath) {
-            mod.WriteToBinaryParallel(pluginPath);
+            mod.WriteToBinaryParallel(pluginPath, new BinaryWriteParameters {
+                MastersListOrdering = new MastersListOrderingByLoadOrder(Program.state!.LoadOrder)
+            });
         }
     }
 }
