@@ -23,9 +23,8 @@ namespace LoadScreenGen {
         protected override void Setup() { }
         protected override void ProcessLscr(Image image, LoadScreen lscr, int counter) {
             var cond = new ConditionFloat();
-            var condData = new FunctionConditionData();
+            var condData = new GetRandomPercentConditionData();
             cond.Data = condData;
-            condData.Function = Condition.Function.GetRandomPercent;
             cond.ComparisonValue = 100;
             cond.CompareOperator = CompareOperator.LessThanOrEqualTo;
             lscr.Conditions.Add(cond);
@@ -40,10 +39,9 @@ namespace LoadScreenGen {
         }
         protected override void ProcessLscr(Image image, LoadScreen lscr, int counter) {
             var cond = new ConditionFloat();
-            var condData = new FunctionConditionData();
+            var condData = new GetGlobalValueConditionData();
             cond.Data = condData;
-            condData.Function = Condition.Function.GetGlobalValue;
-            condData.ParameterOneRecord = debugGlobal!.ToNullableLink();
+            condData.Global.Link.SetTo(debugGlobal);
             cond.ComparisonValue = counter;
             cond.CompareOperator = CompareOperator.EqualTo;
             lscr.Conditions.Add(cond);
@@ -100,11 +98,12 @@ namespace LoadScreenGen {
                     Duration = 0
                 };
                 effect.Data = effectData;
-                var cond = new ConditionFloat();
-                cond.ComparisonValue = 0f;
-                var conditionData = new FunctionConditionData();
-                conditionData.Function = Condition.Function.GetInSameCell;
-                conditionData.ParameterOneRecord.SetTo(marker);
+                var cond = new ConditionFloat {
+                    ComparisonValue = 0f
+                };
+                var conditionData = new GetInSameCellConditionData();
+
+                conditionData.Target.Link.SetTo(marker);
                 cond.Data = conditionData;
                 effect.Conditions.Add(cond);
                 cellStalkerSpell.Effects.Add(effect);
@@ -113,11 +112,9 @@ namespace LoadScreenGen {
         }
         protected override void ProcessLscr(Image image, LoadScreen lscr, int counter) {
             var cond = new ConditionGlobal();
-            var condData = new FunctionConditionData();
+            var condData = new GetGlobalValueConditionData();
             cond.Data = condData;
-            cond.Flags = Condition.Flag.UseGlobal;
-            condData.Function = Condition.Function.GetGlobalValue;
-            condData.ParameterOneRecord = syncRandomVar!.ToNullableLink();
+            condData.Global.Link.SetTo(syncRandomVar);
             cond.ComparisonValue = configFrequencyVar!.ToNullableLink();
             cond.CompareOperator = CompareOperator.LessThanOrEqualTo;
             lscr.Conditions.Add(cond);
@@ -189,9 +186,10 @@ namespace LoadScreenGen {
             if(Program.Settings.authorSettings.EnableAuthorMode) {
                 mod.ModHeader.Author = Program.Settings.authorSettings.ModAuthor;
                 mod.ModHeader.Description = Program.Settings.authorSettings.ModDescription;
-            }
-            if(imageArray.Length < 900 && mod.SkyrimRelease == SkyrimRelease.SkyrimSE) {
-                mod.ModHeader.Flags |= SkyrimModHeader.HeaderFlag.LightMaster;
+
+                if(imageArray.Length < 900 && mod.SkyrimRelease == SkyrimRelease.SkyrimSE) {
+                    mod.ModHeader.Flags |= SkyrimModHeader.HeaderFlag.LightMaster;
+                }
             }
             switch(loadingScreenPriority) {
                 case LoadingScreenPriority.Standalone:
@@ -220,7 +218,7 @@ namespace LoadScreenGen {
             }
         }
 
-        public static ISkyrimMod CreateNewEsp(string pluginPath, SkyrimRelease release, string dataPath) {
+        public static ISkyrimMod CreateNewEsp(string pluginPath, SkyrimRelease release) {
             return new SkyrimMod(ModKey.FromNameAndExtension(Path.GetFileName(pluginPath)), release);
         }
 

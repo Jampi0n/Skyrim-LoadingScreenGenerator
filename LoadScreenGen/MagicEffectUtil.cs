@@ -15,8 +15,11 @@ namespace LoadScreenGen {
             effect.Flags |= MagicEffect.Flag.HideInUI;
             effect.MagicSkill = ActorValue.None;
             effect.ResistValue = ActorValue.None;
-            effect.Archetype.Type = MagicEffectArchetype.TypeEnum.Script;
-            effect.Archetype.ActorValue = ActorValue.None;
+            effect.Archetype = new MagicEffectArchetype() {
+                Type = MagicEffectArchetype.TypeEnum.Script,
+                ActorValue = ActorValue.None,
+                
+            };
             effect.CastingSoundLevel = SoundLevel.Silent;
             effect.BaseCost = 0;
         }

@@ -282,18 +282,18 @@ namespace LoadScreenGen {
                         foreach(var frequency in newFrequencyList) {
                             if(Settings.authorSettings.loadingScreenText != LoadingScreenText.Never) {
                                 if(Settings.authorSettings.TargetRelease != TargetRelease.SE_Only) {
-                                    CreatePluginOptions(SkyrimRelease.SkyrimLE, state.DataFolderPath, frequency, true, imageArray, loadScreenPriority);
+                                    CreatePluginOptions(SkyrimRelease.SkyrimLE, frequency, true, imageArray, loadScreenPriority);
                                 }
                                 if(Settings.authorSettings.TargetRelease != TargetRelease.LE_Only) {
-                                    CreatePluginOptions(SkyrimRelease.SkyrimSE, state.DataFolderPath, frequency, true, imageArray, loadScreenPriority);
+                                    CreatePluginOptions(SkyrimRelease.SkyrimSE, frequency, true, imageArray, loadScreenPriority);
                                 }
                             }
                             if(Settings.authorSettings.loadingScreenText != LoadingScreenText.Always) {
                                 if(Settings.authorSettings.TargetRelease != TargetRelease.SE_Only) {
-                                    CreatePluginOptions(SkyrimRelease.SkyrimLE, state.DataFolderPath, frequency, false, imageArray, loadScreenPriority);
+                                    CreatePluginOptions(SkyrimRelease.SkyrimLE, frequency, false, imageArray, loadScreenPriority);
                                 }
                                 if(Settings.authorSettings.TargetRelease != TargetRelease.LE_Only) {
-                                    CreatePluginOptions(SkyrimRelease.SkyrimSE, state.DataFolderPath, frequency, false, imageArray, loadScreenPriority);
+                                    CreatePluginOptions(SkyrimRelease.SkyrimSE, frequency, false, imageArray, loadScreenPriority);
                                 }
                             }
                         }
@@ -314,10 +314,10 @@ namespace LoadScreenGen {
         public static string GetPluginName(SkyrimRelease release, int frequency, bool includeText, LoadingScreenPriority loadScreenPriority) {
             return "FOMOD_" + release + "_M" + (includeText ? "1" : "0") + "_C_" + loadScreenPriority + "_P" + frequency + "_FOMODEND_" + Settings.authorSettings.PluginName;
         }
-        public static void CreatePluginOptions(SkyrimRelease release, string dataPath, int frequency, bool includeText, Image[] imageArray, LoadingScreenPriority loadScreenPriority) {
+        public static void CreatePluginOptions(SkyrimRelease release, int frequency, bool includeText, Image[] imageArray, LoadingScreenPriority loadScreenPriority) {
             var pluginPath = GetPluginName(release, frequency, includeText, loadScreenPriority);
             pluginPath = Path.Combine(fomodTmpPath, pluginPath);
-            var mod = PluginGen.CreateNewEsp(pluginPath, release, dataPath);
+            var mod = PluginGen.CreateNewEsp(pluginPath, release);
             PluginGen.CreateEsp(mod, imageArray, Settings.authorSettings.ModFolder, Settings.authorSettings.PluginPrefix, includeText, frequency, loadScreenPriority);
             PluginGen.WriteNewEsp(mod, pluginPath);
         }
