@@ -89,6 +89,8 @@ namespace LoadScreenGen {
                     PluginGen.CreateEsp(state.PatchMod, imageArray, Settings.userSettings.DefaultModFolder, Settings.userSettings.DefaultPrefix, true, Settings.userSettings.Frequency, Settings.userSettings.LoadScreenPriority);
                     stopWatch.Stop();
                     Logger.LogTime("Plugin generation took: ", stopWatch.Elapsed);
+
+                    FomodGen.CopyScripts(Path.Combine(state.DataFolderPath, "scripts"));
                 } else {
                     throw new DirectoryNotFoundException("Cannot find source directory.");
                 }

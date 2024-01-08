@@ -212,10 +212,10 @@ namespace LoadScreenGen {
 
     public class FomodGen {
         static void CopyScript(string scriptName, string dest) {
-            File.Copy(Path.Combine(Program.resourceDirectory, "scripts", scriptName + ".pex"), Path.Combine(dest, scriptName + ".pex"));
-            File.Copy(Path.Combine(Program.resourceDirectory, "scripts", "source", scriptName + ".psc"), Path.Combine(dest, "source", scriptName + ".psc"));
+            File.Copy(Path.Combine(Program.resourceDirectory, "scripts", scriptName + ".pex"), Path.Combine(dest, scriptName + ".pex"), true);
+            File.Copy(Path.Combine(Program.resourceDirectory, "scripts", "source", scriptName + ".psc"), Path.Combine(dest, "source", scriptName + ".psc"), true);
         }
-        static void CopyScripts(string dest) {
+        public static void CopyScripts(string dest) {
             Directory.CreateDirectory(dest);
             Directory.CreateDirectory(Path.Combine(dest, "source"));
             CopyScript("JLS_MCM_Quest_Script", dest);
