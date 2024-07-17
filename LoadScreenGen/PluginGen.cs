@@ -188,7 +188,7 @@ namespace LoadScreenGen {
                 mod.ModHeader.Description = Program.Settings.authorSettings.ModDescription;
 
                 if(imageArray.Length < 900 && mod.SkyrimRelease == SkyrimRelease.SkyrimSE) {
-                    mod.ModHeader.Flags |= SkyrimModHeader.HeaderFlag.LightMaster;
+                    mod.ModHeader.Flags |= SkyrimModHeader.HeaderFlag.Light;
                 }
             }
             switch(loadingScreenPriority) {
